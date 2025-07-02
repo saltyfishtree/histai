@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import { currentLanguage } from './app_state';
+import { useAppStore } from './src/stores/appStore';
 
 type TranslationKey = string; // Using string for flexibility, can be more structured
 
@@ -221,7 +221,7 @@ const translations: Translations = {
     'histbench.samples.level2.q2.difficulty_level_display': { en: "Level 2", zh: "2级" },
     'histbench.samples.level2.q2.answer_type': { en: "Exact Match", zh: "精确匹配" },
     'histbench.samples.level2.q2.question': { en: "What kind of disease was the formula in the picture used to treat?", zh: "图中药方用于治疗何种疾病？" },
-    'histbench.samples.level2.q2.data': { en: "Image of Han Dynasty medical bamboo slips: level_2_4.png", zh: "汉代医学简牍图片：level_2_4.png" },
+    'histbench.samples.level2.q2.data': { en: "Image of Han Dynasty medical bamboo slips", zh: "汉代医学简牍图片" },
     'histbench.samples.level2.q2.answer': { en: "Cough / Chronic Cough", zh: "咳嗽 / 久咳" },
     'histbench.samples.level2.q2.explanation': { en: "This prescription comes from the 'Han Dynasty Medical Slips' unearthed in Wuwei, Gansu, and is an ancient remedy for 'chronic cough with wheezing in the throat that sounds like a hundred insects'.", zh: "该处方出自甘肃武威出土的《汉代医简》，为治疗“久咳上气喉中如百虫鸣”之古代药方。" },
     'histbench.samples.level2.q2.source_reference': { en: "Gansu Provincial Museum and Wuwei County Cultural Center, eds., Wuwei Handai Yijian (Medical Slips of the Han Dynasty from Wuwei) (Beijing: Wenwu Chubanshe, 1975).", zh: "甘肃省博物馆、武威县文化馆编：《武威汉代医简》，文物出版社，1975年。" },
@@ -580,6 +580,7 @@ const translations: Translations = {
 };
 
 export function t(key: TranslationKey, params?: Record<string, string | number>): string {
+    const currentLanguage = useAppStore.getState().currentLanguage;
     const entry = translations[key];
     if (!entry) {
         console.warn(`Translation key "${key}" not found.`);

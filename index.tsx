@@ -2,9 +2,11 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import { initializeRouter, renderApp } from './router';
+import { routerService } from './src/services/routerService';
+import { initializeMotionSystem } from './src/components/motion/MotionSystem';
 
+// Initialize the application with new architecture
+routerService.initialize();
 
-// Initial render
-initializeRouter();
-renderApp();
+// Initialize motion system for animations
+initializeMotionSystem();

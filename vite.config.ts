@@ -4,6 +4,9 @@ import { defineConfig, loadEnv } from 'vite';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
+      css: {
+        postcss: './postcss.config.js'
+      },
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
@@ -12,6 +15,18 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
+      },
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              vendor: ['@google/genai'],
+              motion: ['framer-motion'],
+              ui: ['clsx', 'tailwind-merge', 'zustand']
+            }
+          }
+        },
+        chunkSizeWarningLimit: 1000
       }
     };
 });

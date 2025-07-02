@@ -1,3 +1,8 @@
+/* Tailwind CSS directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* CSS Custom Properties (Variables) for Modern Theme with Historical Accents */
 :root {
     --primary-bg: #FFFFFF;
@@ -545,6 +550,43 @@ a:hover, a:focus {
     color: var(--text-color);
     line-height: 1.65;
     flex-grow: 1; /* Allow p to take space if card height is fixed by grid */
+}
+
+/* Hero Section with Texture Background */
+.hero-with-texture {
+    background-image: 
+        linear-gradient(135deg, rgb(240 246 255 / 0.85) 0%, rgb(249 246 242 / 0.85) 100%),
+        url('/resource/background.avif');
+    background-size: cover, cover;
+    background-position: center, center;
+    background-repeat: no-repeat, no-repeat;
+    background-attachment: scroll, scroll;
+}
+
+/* Fallback for browsers that don't support AVIF */
+@supports not (background-image: url('/resource/background.avif')) {
+    .hero-with-texture {
+        background-image: 
+            linear-gradient(135deg, rgb(240 246 255 / 0.85) 0%, rgb(249 246 242 / 0.85) 100%),
+            url('/resource/background.webp');
+    }
+}
+
+.hero-with-texture::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at center, transparent 30%, rgba(240, 246, 255, 0.1) 70%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.hero-with-texture > div {
+    position: relative;
+    z-index: 2;
 }
 
 /* New Demo CTA Section */
@@ -1470,6 +1512,11 @@ input[type="file"] {
     .hero-section h1 {
         font-size: 2.5rem; /* ~40px */
     }
+    .hero-with-texture {
+        min-height: 450px !important;
+        height: 65vh !important;
+        max-height: 700px !important;
+    }
     h2 {
         font-size: 1.8rem; /* ~28.8px */
     }
@@ -1592,6 +1639,11 @@ input[type="file"] {
     }
     .hero-section p {
         font-size: 1rem; 
+    }
+    .hero-with-texture {
+        min-height: 400px !important;
+        height: 60vh !important;
+        max-height: 600px !important;
     }
     h2 {
         font-size: 1.6rem; 
