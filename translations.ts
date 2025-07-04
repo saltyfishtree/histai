@@ -176,8 +176,14 @@ const translations: Translations = {
     'histbench.samples.level1.q2.title': { en: "Translator Identification", zh: "翻译者识别题" },
     'histbench.samples.level1.q2.difficulty_level_display': { en: "Level 1", zh: "1级" },
     'histbench.samples.level1.q2.answer_type': { en: "Exact Match", zh: "精确匹配" },
-    'histbench.samples.level1.q2.question': { en: "Who are the translator of this text?\nThese poor villages, this sorry nature! Long suffering is native to you,\n land of our Russian people!...\n —Fedor Tyutchev (August 13, 1855), trans.", zh: "这段文字的翻译者是谁？\n这些贫困的村庄，这片不幸的土地！苦难与生俱来就属于你，\n我们俄罗斯人民的土地！...\n——费奥多尔·秋切夫（1855年8月13日），译。" },
-    'histbench.samples.level1.q2.data': { en: "English translation of Tyutchev’s poem", zh: "秋切夫诗歌的英译本" },
+    'histbench.samples.level1.q2.question': { 
+        en: "Who are the translator of this text?\nThese poor villages, this sorry nature! Long suffering is native to you,\n land of our Russian people!...\n —Fedor Tyutchev (August 13, 1855), trans.",
+        zh: "这段文字的翻译者是谁？\n这些贫困的村庄，这片不幸的土地！苦难与生俱来就属于你，\n我们俄罗斯人民的土地！...\n——费奥多尔·秋切夫（1855年8月13日），译。" 
+    },
+    'histbench.samples.level1.q2.data': { 
+        en: "English translation of Tyutchev’s poem",
+        zh: "秋切夫诗歌的英译本" 
+    },
     'histbench.samples.level1.q2.answer': { en: "F. Jude", zh: "F. Jude" },
     'histbench.samples.level1.q2.explanation': { en: "The translation is cited in Yegor Gaidar’s Russia: A Long View, where the translator is credited as F. Jude.", zh: "该译文引自盖达尔的《俄罗斯：长远视角》，其中译者署名为 F. Jude。" },
     'histbench.samples.level1.q2.source_reference': { en: "Yegor Gaidar. Russia: A Long View. The MIT Press, 2012, p.145", zh: "Yegor Gaidar. Russia: A Long View. The MIT Press, 2012, p.145" },
