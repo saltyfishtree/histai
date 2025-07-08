@@ -4,6 +4,8 @@
  */
 import { GoogleGenAI } from "@google/genai";
 import { t } from '../../../translations';
+import { submitToFirestore, validateSubmissionData } from '../../services/firebase/submissionService';
+import { FormData } from '../../types/types';
 
 const IMAGE_BASE_URL = "/resource/questions/";
 
@@ -526,20 +528,25 @@ async function handleFormSubmit(event: Event) {
     const errorContainer = document.getElementById('form-validation-error') as HTMLElement;
     const statusContainer = document.getElementById('submission-status-container') as HTMLElement;
     
-    // Basic Validation
-    const requiredFields = form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('[required]');
-    let allValid = true;
-    requiredFields.forEach(field => {
-        if (!field.value.trim()) {
-            allValid = false;
-            field.style.borderColor = 'var(--level3-text-card-header)';
-        } else {
-            field.style.borderColor = 'var(--border-color)';
-        }
-    });
+    // Collect form data
+    const formData: FormData = {
+        difficulty: (document.getElementById('difficulty') as HTMLSelectElement).value,
+        answerType: (document.getElementById('answerType') as HTMLSelectElement).value,
+        questionText: (document.getElementById('questionText') as HTMLTextAreaElement).value,
+        requiredData: (document.getElementById('requiredData') as HTMLTextAreaElement).value,
+        answer: (document.getElementById('answer') as HTMLInputElement).value,
+        explanation: (document.getElementById('explanation') as HTMLTextAreaElement).value,
+        sourceReference: (document.getElementById('sourceReference') as HTMLTextAreaElement).value,
+        thematicDirection: (document.getElementById('thematicDirection') as HTMLTextAreaElement).value,
+        contributorName: (document.getElementById('contributorName') as HTMLInputElement).value,
+        contributorAffiliation: (document.getElementById('contributorAffiliation') as HTMLInputElement).value,
+        fileUpload: (document.getElementById('fileUpload') as HTMLInputElement).files?.[0]
+    };
 
-    if (!allValid) {
-        errorContainer.textContent = t('submit.messages.validation_error');
+    // Validate form data using Firebase service
+    const validation = validateSubmissionData(formData);
+    if (!validation.isValid) {
+        errorContainer.innerHTML = validation.errors.map(error => `<p>${error}</p>`).join('');
         errorContainer.style.display = 'block';
         return;
     }
@@ -556,6 +563,16 @@ async function handleFormSubmit(event: Event) {
     `;
 
     try {
+        // Submit data to Firebase Firestore
+        const submissionResult = await submitToFirestore(formData);
+        
+        if (!submissionResult.success) {
+            throw new Error(submissionResult.error || 'Failed to save submission');
+        }
+
+        console.log('Data submitted to Firebase with ID:', submissionResult.data);
+
+        // Generate thank you message using Gemini AI
         const ai = new GoogleGenAI({apiKey: process.env.API_KEY as string});
         const prompt = "A user has successfully contributed a new question to HistBench. Please provide a warm and encouraging thank you message, confirming their submission has been received and will be reviewed by our team of historians. Mention that their contribution is valuable for advancing AI's understanding of history.";
         
@@ -570,17 +587,41 @@ async function handleFormSubmit(event: Event) {
             <div id="submission-status" class="success">
                 <h3>${t('submit.messages.success_title')}</h3>
                 <p>${successMessage}</p>
+                <p><small>Submission ID: ${submissionResult.data}</small></p>
             </div>
         `;
     } catch (error) {
-        console.error("Gemini API call failed:", error);
-        statusContainer.innerHTML = `
-            <div id="submission-status" class="error">
-                <h3>${t('submit.messages.error_title')}</h3>
-                <p>${t('submit.messages.api_error')}</p>
-            </div>
-        `;
-        form.style.display = 'grid'; // Show form again on error
+        console.error("Submission failed:", error);
+        
+        // Check if it's a Firebase error or Gemini error
+        const isFirebaseError = error instanceof Error && (
+            error.message.includes('Firestore') || 
+            error.message.includes('permission-denied') ||
+            error.message.includes('network-request-failed')
+        );
+        
+        if (isFirebaseError) {
+            statusContainer.innerHTML = `
+                <div id="submission-status" class="error">
+                    <h3>${t('submit.messages.error_title')}</h3>
+                    <p>Failed to save your submission. Please check your internet connection and try again.</p>
+                    <p><small>Error: ${error instanceof Error ? error.message : 'Unknown error'}</small></p>
+                </div>
+            `;
+        } else {
+            // Data was saved, but AI message generation failed
+            statusContainer.innerHTML = `
+                <div id="submission-status" class="success">
+                    <h3>${t('submit.messages.success_title')}</h3>
+                    <p>Your submission has been successfully saved and will be reviewed by our team of historians. Thank you for your contribution to advancing AI's understanding of history!</p>
+                    <p><small>Note: AI message generation temporarily unavailable</small></p>
+                </div>
+            `;
+        }
+        
+        if (isFirebaseError) {
+            form.style.display = 'grid'; // Show form again only on Firebase error
+        }
     } finally {
         const submitBtn = document.getElementById('submit-form-btn') as HTMLButtonElement;
         const prevBtn = document.getElementById('prev-step-btn') as HTMLButtonElement;

@@ -25,11 +25,11 @@
   },
   "dependencies": {
     "@google/genai": "^1.8.0",
-    "clsx": "^2.0.0",
-    "firebase": "^11.10.0",
+    "zustand": "^4.4.0",
     "framer-motion": "^10.16.0",
+    "clsx": "^2.0.0",
     "tailwind-merge": "^1.14.0",
-    "zustand": "^4.4.0"
+    "firebase": "^10.7.1"
   },
   "devDependencies": {
     "@tailwindcss/aspect-ratio": "^0.4.0",

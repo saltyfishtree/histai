@@ -177,12 +177,12 @@ const translations: Translations = {
     'histbench.samples.level1.q2.difficulty_level_display': { en: "Level 1", zh: "1级" },
     'histbench.samples.level1.q2.answer_type': { en: "Exact Match", zh: "精确匹配" },
     'histbench.samples.level1.q2.question': { 
-        en: "Who are the translator of this text?\nThese poor villages, this sorry nature! Long suffering is native to you,\n land of our Russian people!...\n —Fedor Tyutchev (August 13, 1855), trans.",
-        zh: "这段文字的翻译者是谁？\n这些贫困的村庄，这片不幸的土地！苦难与生俱来就属于你，\n我们俄罗斯人民的土地！...\n——费奥多尔·秋切夫（1855年8月13日），译。" 
+        en: "Who are the translator of this text?",
+        zh: "这段文字的翻译者是谁？" 
     },
     'histbench.samples.level1.q2.data': { 
-        en: "English translation of Tyutchev’s poem",
-        zh: "秋切夫诗歌的英译本" 
+        en: "These poor villages, this sorry nature! Long suffering is native to you, land of our Russian people! The proud foreign glance cannot comprehend—would not even notice!— what shines secretly through your humble nakedness. Burdened by his cross, throughout your length and breadth, in the rags of a slave, the Heavenly King has walked, blessing you, my native land! \n —Fedor Tyutchev (August 13, 1855), trans.",
+        zh: "These poor villages, this sorry nature! Long suffering is native to you, land of our Russian people! The proud foreign glance cannot comprehend—would not even notice!— what shines secretly through your humble nakedness. Burdened by his cross, throughout your length and breadth, in the rags of a slave, the Heavenly King has walked, blessing you, my native land! \n —Fedor Tyutchev (August 13, 1855), trans.",
     },
     'histbench.samples.level1.q2.answer': { en: "F. Jude", zh: "F. Jude" },
     'histbench.samples.level1.q2.explanation': { en: "The translation is cited in Yegor Gaidar’s Russia: A Long View, where the translator is credited as F. Jude.", zh: "该译文引自盖达尔的《俄罗斯：长远视角》，其中译者署名为 F. Jude。" },
@@ -309,8 +309,8 @@ const translations: Translations = {
     'histbench.samples.level3.q4.option_d': { en: "D. Šingqu Säli", zh: "D. Šingqu Säli (胜光法师)" },
     'histbench.samples.level3.q4.option_e': { en: "E. Aśoka", zh: "E. Aśoka (阿育王)" },
     'histbench.samples.level3.q4.data': {
-        en: "šrirnalandaram-ka eltd[ilär] anta tägdökdä kamag [kuvrag] yıgılmıš ärdi, samt[so ačari] olar-nı birlä körüšü t[ükättök] dä š[ilaba]ḍre ačari bašınt[a][yegir]mi [a]čari-ka samtso ača]rig uduzturup…",
-        zh: "šrirnalandaram-ka eltd[ilär] anta tägdökdä kamag [kuvrag] yıgılmıš ärdi, samt[so ačari] olar-nı birlä körüšü t[ükättök] dä š[ilaba]ḍre ačari bašınt[a][yegir]mi [a]čari-ka samtso ača]rig uduzturup…"
+        en: "šrirnalandaram-ka  eltd[ilär] anta tägdökdä kamag [kuvrag] yıgılmıš ärdi, samt[so ačari] olar-nı birlä körüšü t[ükättök] dä š[ilaba]ḍre ačari bašınt[a][yegir]mi [a]čari-ka  samtso ača]rig uduzturup [drmaguptake] ačari-ka yüküntür [gäli]… …dı-lar , d(a)rmaguptake [ačari] ärsär , kayken lüši [tegmä] šilabadre ačari käntü öz",
+        zh: "šrirnalandaram-ka  eltd[ilär] anta tägdökdä kamag [kuvrag] yıgılmıš ärdi, samt[so ačari] olar-nı birlä körüšü t[ükättök] dä š[ilaba]ḍre ačari bašınt[a][yegir]mi [a]čari-ka  samtso ača]rig uduzturup [drmaguptake] ačari-ka yüküntür [gäli]… …dı-lar , d(a)rmaguptake [ačari] ärsär , kayken lüši [tegmä] šilabadre ačari käntü öz"
     },
     'histbench.samples.level3.q4.correct_answer': { en: "C", zh: "C" },
     'histbench.samples.level3.q4.explanation': {
@@ -453,7 +453,9 @@ const translations: Translations = {
      },
 
     'impact.pushing_frontiers.title': { en: "Pushing the Frontiers of AI through HistBench", zh: "以HistBench推动人工智能前沿发展" },
-    'impact.pushing_frontiers.p1': { en: "The inherent complexities of historical data, meticulously encapsulated within HistBench, establish history as a fertile ground for advancing the frontiers of Artificial Intelligence:", zh: "历史数据独特的复杂性被精准地凝练于HistBench中，这使得历史学转变为推进人工智能前沿研究的沃土：领域专用基准HistBench的成功昭示，针对特定领域的知识开发专用基准具有不可替代的价值；攻克HistBench基准带来的时序逻辑、因果推理及矛盾信息处理等方面的挑战，可系统地训练AI的复杂推理能力；而值得警醒的是，基于历史数据的基准研究将伦理议题推向舞台中心——从数据偏差、阐释偏见到历史叙事选择，HistBench如同一面棱镜，迫使研究者直面人工智能参与文明记忆建构的责任与限度。" },
+    'impact.pushing_frontiers.p1': { 
+        en: "The inherent complexities of historical data, meticulously encapsulated within HistBench, establish history as a fertile ground for advancing the frontiers of Artificial Intelligence: The success of the domain-specific benchmark, HistBench, demonstrates the irreplaceable value of developing specialized benchmarks for targeted fields of knowledge. Overcoming the challenges posed by HistBench—such as temporal logic, causal reasoning, and the processing of contradictory information—can systematically train an AI's sophisticated reasoning capabilities. However, it is crucial to recognize that benchmark research based on historical data thrusts ethical issues to the forefront. From data and interpretive biases to the selection of historical narratives, HistBench acts as a prism, compelling researchers to confront the responsibilities and limitations of artificial intelligence in the construction of civilizational memory.", 
+        zh: "历史数据独特的复杂性被精准地凝练于HistBench中，这使得历史学转变为推进人工智能前沿研究的沃土：领域专用基准HistBench的成功昭示，针对特定领域的知识开发专用基准具有不可替代的价值；攻克HistBench基准带来的时序逻辑、因果推理及矛盾信息处理等方面的挑战，可系统地训练AI的复杂推理能力；而值得警醒的是，基于历史数据的基准研究将伦理议题推向舞台中心——从数据偏差、阐释偏见到历史叙事选择，HistBench如同一面棱镜，迫使研究者直面人工智能参与文明记忆建构的责任与限度。" },
 
     'impact.future_outlook.title': { en: "Future Outlook", zh: "未来展望" },
     'impact.future_outlook.p_all': { en: "Our work with HistBench and HistAgent marks the beginning of an exciting journey. We envision a future where: AI agents, proven on rigorous benchmarks like HistBench, can act as sophisticated research assistants for historians. Interactive AI-driven platforms transform history education, making it more dynamic and personalized. AI contributes to the preservation and interpretation of cultural heritage on a global scale. The methodological insights and technological advancements from HistAgent and HistBench catalyze the creation of sophisticated AI tools for a wide array of complex humanities and social science disciplines. We are dedicated to advancing this pioneering research, continuously refining HistAgent, and strategically expanding HistBench, to further unlock the profound potential of AI in illuminating our collective past.", zh: "HistBench与HistAgent的研究标志着人工智能在人文社科中应用的开端，我们能够预见这样的未来：经严格基准验证的AI智能体将成为史学家专业研究的协作者；交互式AI平台将重塑历史教育，实现动态化与个性化的知识传授；人工智能将在全球范围内参与文化遗产的保存与阐释。更重要的是，HistAgent的技术突破与HistBench的框架设计将催化人文社科领域的范式革命——为哲学阐释、艺术批评和社会分析等专业领域建立专用智能评估体系。团队将矢志推进三大方向：持续优化HistAgent的功能模块、系统扩展HistBench的学科边界、深入探索AI照亮集体记忆深幽之处的实现路径。" },

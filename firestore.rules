@@ -1,0 +1,69 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Submissions collection - only allow creates, no reads/updates/deletes
+    match /submissions/{document} {
+      // Allow create operations for unauthenticated users
+      allow create: if request.time < timestamp.date(2025, 12, 31) &&
+                   request.auth == null &&
+                   validateSubmission(request.resource.data);
+      
+      // Deny all read, update, and delete operations for public users
+      allow read, update, delete: if false;
+    }
+  }
+}
+
+// Validation function for submission data
+function validateSubmission(data) {
+  return data.keys().hasAll([
+    'difficulty', 'answerType', 'questionText', 'requiredData', 
+    'answer', 'explanation', 'sourceReference', 'thematicDirection', 
+    'contributorName', 'contributorAffiliation', 'submittedAt', 'status'
+  ]) &&
+  
+  // Validate field types and constraints
+  data.difficulty is string &&
+  data.difficulty in ['1', '2', '3'] &&
+  
+  data.answerType is string &&
+  data.answerType in ['Exact Match', 'Multiple Choice'] &&
+  
+  data.questionText is string &&
+  data.questionText.size() >= 10 &&
+  data.questionText.size() <= 1000 &&
+  
+  data.requiredData is string &&
+  data.requiredData.size() >= 5 &&
+  data.requiredData.size() <= 2000 &&
+  
+  data.answer is string &&
+  data.answer.size() >= 1 &&
+  data.answer.size() <= 500 &&
+  
+  data.explanation is string &&
+  data.explanation.size() >= 20 &&
+  data.explanation.size() <= 2000 &&
+  
+  data.sourceReference is string &&
+  data.sourceReference.size() >= 5 &&
+  data.sourceReference.size() <= 500 &&
+  
+  data.thematicDirection is string &&
+  data.thematicDirection.size() >= 5 &&
+  data.thematicDirection.size() <= 500 &&
+  
+  data.contributorName is string &&
+  data.contributorName.size() >= 2 &&
+  data.contributorName.size() <= 100 &&
+  
+  data.contributorAffiliation is string &&
+  data.contributorAffiliation.size() >= 2 &&
+  data.contributorAffiliation.size() <= 200 &&
+  
+  data.status is string &&
+  data.status in ['pending', 'processed', 'emailed'] &&
+  
+  // Ensure document doesn't contain too many fields (prevent data bloat)
+  data.keys().size() <= 15;
+} 
