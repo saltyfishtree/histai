@@ -1,21 +1,25 @@
-// Firebase Functions 2nd gen imports
-import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { onRequest } from 'firebase-functions/v2/https';
-import { setGlobalOptions } from 'firebase-functions/v2';
+import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
-// Set global options for all functions
-setGlobalOptions({ 
-  region: 'us-central1',
-  maxInstances: 10,
-  concurrency: 80
-});
-
-// Initialize Firebase Admin
+// 初始化Firebase Admin SDK
 admin.initializeApp();
 
+// 获取Firestore数据库实例
+// 在模拟器环境中，这会自动连接到本地Firestore模拟器
+const db = admin.firestore();
+
+// 在开发环境中设置模拟器连接
+if (process.env.NODE_ENV !== 'production') {
+  // 检查是否在模拟器环境中运行
+  if (process.env.FIRESTORE_EMULATOR_HOST) {
+    console.log('🔧 连接到Firestore模拟器:', process.env.FIRESTORE_EMULATOR_HOST);
+  } else {
+    console.log('⚠️ 警告: 未检测到Firestore模拟器环境变量');
+  }
+}
+
+// 定义表单数据接口
 interface SubmissionData {
-  id?: string;
   difficulty: string;
   answerType: string;
   questionText: string;
@@ -26,497 +30,461 @@ interface SubmissionData {
   thematicDirection: string;
   contributorName: string;
   contributorAffiliation: string;
-  submittedAt: any;
-  status: 'pending' | 'processed' | 'emailed';
-  userAgent?: string;
 }
 
-/**
- * Core logic for processing submissions
- */
-async function processSubmissions(): Promise<void> {
-  const db = admin.firestore();
-  
+// 简单的健康检查函数
+export const healthCheck = functions.https.onRequest((req, res) => {
+  // 设置CORS头
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
+
+// 提交问题数据的Cloud Function（Firestore版本）
+export const submitQuestion = functions.https.onRequest(async (req, res) => {
+  // 设置CORS头
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
   try {
-    // Get all pending submissions
-    const submissionsRef = db.collection('submissions');
-    const pendingQuery = submissionsRef
-      .where('status', '==', 'pending')
-      .orderBy('submittedAt', 'desc');
-    
-    const snapshot = await pendingQuery.get();
-    
-    if (snapshot.empty) {
-      console.log('No pending submissions found');
+    // 只允许POST请求
+    if (req.method !== 'POST') {
+      res.status(405).json({ 
+        success: false, 
+        error: '只允许POST请求' 
+      });
       return;
     }
 
-    const submissions: SubmissionData[] = [];
-    const batch = db.batch();
+    // 获取提交的数据
+    const submissionData: SubmissionData = req.body;
 
-    snapshot.forEach((doc: admin.firestore.QueryDocumentSnapshot) => {
-      const data = doc.data() as SubmissionData;
-      submissions.push({ ...data, id: doc.id });
-      
-      // Mark as processed
-      batch.update(doc.ref, { 
-        status: 'processed',
-        processedAt: admin.firestore.FieldValue.serverTimestamp()
+    // 基本验证
+    if (!submissionData.questionText || !submissionData.answer || !submissionData.contributorName) {
+      res.status(400).json({
+        success: false,
+        error: '缺少必填字段：questionText, answer, contributorName'
       });
-    });
-
-    // Generate email content
-    const emailContent = generateEmailContent(submissions);
-    
-    // Send email using your preferred service
-    // This is a placeholder - you would integrate with SendGrid, Mailgun, etc.
-    await sendEmail('abc@gmail.com', 'New HistBench Submissions', emailContent);
-    
-    // Update statuses to 'emailed'
-    submissions.forEach((submission) => {
-      if (submission.id) {
-        const docRef = db.collection('submissions').doc(submission.id);
-        batch.update(docRef, { 
-          status: 'emailed',
-          emailedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-      }
-    });
-
-    await batch.commit();
-    
-    console.log(`Processed ${submissions.length} submissions`);
-  } catch (error) {
-    console.error('Error in processSubmissions:', error);
-    throw error;
-  }
-}
-
-/**
- * Scheduled function to aggregate submissions and send email digest
- * Runs daily at 6 AM UTC
- */
-export const sendDailySubmissionDigest = onSchedule(
-  {
-    schedule: '0 6 * * *',
-    timeZone: 'UTC',
-    retryCount: 3,
-    maxInstances: 1
-  },
-  async (event) => {
-    try {
-      console.log('Starting daily submission digest...');
-      await processSubmissions();
-      console.log('Daily submission digest completed successfully');
-      return null;
-    } catch (error) {
-      console.error('Error in sendDailySubmissionDigest:', error);
-      throw error;
+      return;
     }
-  }
-);
 
-/**
- * HTTP function to manually trigger email sending (for testing)
- */
-export const triggerEmailDigest = onRequest(
-  {
-    cors: true,
-    maxInstances: 5
-  },
-  async (req, res) => {
-    try {
-      console.log('Manual trigger of email digest started...');
-      await processSubmissions();
-      res.status(200).json({ 
-        success: true, 
-        message: 'Email digest triggered successfully',
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('Error triggering email digest:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: 'Failed to trigger email digest',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  }
-);
+    // 生成唯一ID
+    const submissionId = 'sub_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-/**
- * HTTP function to get submission statistics
- */
-export const getStats = onRequest(
-  {
-    cors: true,
-    maxInstances: 10
-  },
-  async (req, res) => {
-    try {
-      const db = admin.firestore();
-      const submissionsRef = db.collection('submissions');
+    // 准备要保存的数据
+    const questionData = {
+      id: submissionId,
+      // 问题基本信息
+      difficulty: parseInt(submissionData.difficulty || '1'),
+      answerType: submissionData.answerType || 'Exact Match',
+      questionText: submissionData.questionText.trim(),
+      requiredData: submissionData.requiredData?.trim() || '',
+      answer: submissionData.answer.trim(),
+      explanation: submissionData.explanation?.trim() || '',
+      sourceReference: submissionData.sourceReference?.trim() || '',
+      thematicDirection: submissionData.thematicDirection?.trim() || '',
       
-      // Get total count
-      const totalSnapshot = await submissionsRef.count().get();
-      const totalCount = totalSnapshot.data().count;
+      // 贡献者信息
+      contributorName: submissionData.contributorName.trim(),
+      contributorAffiliation: submissionData.contributorAffiliation?.trim() || '',
       
-      // Get pending count
-      const pendingSnapshot = await submissionsRef
-        .where('status', '==', 'pending')
-        .count()
-        .get();
-      const pendingCount = pendingSnapshot.data().count;
-      
-      // Get processed count
-      const processedSnapshot = await submissionsRef
-        .where('status', '==', 'processed')
-        .count()
-        .get();
-      const processedCount = processedSnapshot.data().count;
-      
-      // Get emailed count
-      const emailedSnapshot = await submissionsRef
-        .where('status', '==', 'emailed')
-        .count()
-        .get();
-      const emailedCount = emailedSnapshot.data().count;
+      // 元数据
+      submittedAt: new Date().toISOString(),
+      status: 'pending'
+    };
 
-      res.status(200).json({
-        total: totalCount,
-        pending: pendingCount,
-        processed: processedCount,
-        emailed: emailedCount,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('Error getting stats:', error);
-      res.status(500).json({ 
-        error: 'Failed to get statistics',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  }
-);
+    // 保存到Firestore数据库
+    await db.collection('submissions').doc(submissionId).set(questionData);
 
-/**
- * HTTP function to get submissions with pagination
- */
-export const getSubmissions = onRequest(
-  {
-    cors: true,
-    maxInstances: 10
-  },
-  async (req, res) => {
-    try {
-      const db = admin.firestore();
-      const submissionsRef = db.collection('submissions');
-      
-      // Parse query parameters
-      const limit = Math.min(parseInt(req.query.limit as string) || 10, 100);
-      const status = req.query.status as string;
-      const startAfter = req.query.startAfter as string;
-      
-      let query = submissionsRef.orderBy('submittedAt', 'desc');
-      
-      if (status && ['pending', 'processed', 'emailed'].includes(status)) {
-        query = submissionsRef
-          .where('status', '==', status)
-          .orderBy('submittedAt', 'desc');
-      }
-      
-      if (startAfter) {
-        const startAfterDoc = await submissionsRef.doc(startAfter).get();
-        if (startAfterDoc.exists) {
-          query = query.startAfter(startAfterDoc);
-        }
-      }
-      
-      const snapshot = await query.limit(limit).get();
-      
-      const submissions = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      
-      res.status(200).json({
-        submissions,
-        hasMore: snapshot.docs.length === limit,
-        lastId: snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null
-      });
-    } catch (error) {
-      console.error('Error getting submissions:', error);
-      res.status(500).json({ 
-        error: 'Failed to get submissions',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  }
-);
+    console.log('新问题提交成功:', submissionId);
 
-/**
- * HTTP function to search submissions
- */
-export const searchSubmissions = onRequest(
-  {
-    cors: true,
-    maxInstances: 10
-  },
-  async (req, res) => {
-    try {
-      const db = admin.firestore();
-      const submissionsRef = db.collection('submissions');
-      
-      const searchTerm = req.query.q as string;
-      const difficulty = req.query.difficulty as string;
-      const answerType = req.query.answerType as string;
-      
-      if (!searchTerm && !difficulty && !answerType) {
-        return res.status(400).json({ error: 'At least one search parameter is required' });
-      }
-      
-      let query = submissionsRef.orderBy('submittedAt', 'desc');
-      
-      if (difficulty) {
-        query = submissionsRef
-          .where('difficulty', '==', difficulty)
-          .orderBy('submittedAt', 'desc');
-      }
-      
-      if (answerType) {
-        query = query.where('answerType', '==', answerType);
-      }
-      
-      const snapshot = await query.limit(50).get();
-      
-      let submissions = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      
-      // Client-side filtering for text search (Firestore doesn't support full-text search)
-      if (searchTerm) {
-        const searchLower = searchTerm.toLowerCase();
-        submissions = submissions.filter((submission: any) => {
-          return submission.questionText?.toLowerCase().includes(searchLower) ||
-                 submission.answer?.toLowerCase().includes(searchLower) ||
-                 submission.explanation?.toLowerCase().includes(searchLower) ||
-                 submission.contributorName?.toLowerCase().includes(searchLower);
-        });
-      }
-      
-      res.status(200).json({
-        submissions,
-        count: submissions.length,
-        searchTerm,
-        filters: { difficulty, answerType }
-      });
-    } catch (error) {
-      console.error('Error searching submissions:', error);
-      res.status(500).json({ 
-        error: 'Failed to search submissions',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  }
-);
-
-/**
- * HTTP callable function to submit a contribution
- */
-export const submitContribution = onRequest(
-  {
-    cors: true,
-    maxInstances: 20
-  },
-  async (req, res) => {
-    try {
-      if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-      }
-      
-      const submissionData = req.body as Omit<SubmissionData, 'id' | 'submittedAt' | 'status'>;
-      
-      // Validate required fields
-      const requiredFields = [
-        'difficulty', 'answerType', 'questionText', 
-        'requiredData', 'answer', 'explanation', 
-        'sourceReference', 'thematicDirection', 
-        'contributorName', 'contributorAffiliation'
-      ];
-      
-      for (const field of requiredFields) {
-        if (!submissionData[field as keyof typeof submissionData]) {
-          return res.status(400).json({ error: `Missing required field: ${field}` });
-        }
-      }
-      
-      const db = admin.firestore();
-      const submissionWithMetadata: SubmissionData = {
-        ...submissionData,
-        submittedAt: admin.firestore.FieldValue.serverTimestamp(),
-        status: 'pending',
-        userAgent: req.headers['user-agent'] || 'Unknown'
-      };
-      
-      const docRef = await db.collection('submissions').add(submissionWithMetadata);
-      
-      res.status(201).json({
-        success: true,
-        id: docRef.id,
-        message: 'Contribution submitted successfully'
-      });
-    } catch (error) {
-      console.error('Error submitting contribution:', error);
-      res.status(500).json({ 
-        error: 'Failed to submit contribution',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  }
-);
-
-/**
- * Simple health check function
- */
-export const healthCheck = onRequest(
-  {
-    cors: true
-  },
-  async (req, res) => {
+    // 返回成功响应
     res.status(200).json({
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      version: '2.0.0'
+      success: true,
+      data: {
+        submissionId: submissionId,
+        message: '问题提交成功，感谢您的贡献！'
+      }
+    });
+
+  } catch (error) {
+    console.error('问题提交失败:', error);
+    
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误，请稍后重试',
+      details: error instanceof Error ? error.message : '未知错误'
     });
   }
-);
+});
 
-/**
- * Generate HTML email content from submissions
- */
-function generateEmailContent(submissions: SubmissionData[]): string {
-  const submissionCount = submissions.length;
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+// 获取提交状态的Cloud Function（Firestore版本）
+export const getSubmissionStatus = functions.https.onRequest(async (req, res) => {
+  // 设置CORS头
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
 
-  let html = `
-    <html>
-      <head>
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  try {
+    if (req.method !== 'GET') {
+      res.status(405).json({ 
+        success: false, 
+        error: '只允许GET请求' 
+      });
+      return;
+    }
+
+    const submissionId = req.query.id as string;
+    
+    if (!submissionId) {
+      res.status(400).json({
+        success: false,
+        error: '缺少提交ID参数'
+      });
+      return;
+    }
+
+
+    // 从Firestore查找
+    const doc = await db.collection('submissions').doc(submissionId).get();
+
+    if (!doc.exists) {
+      res.status(404).json({
+        success: false,
+        error: '未找到该提交记录'
+      });
+      return;
+    }
+
+    const submission = doc.data();
+    
+    // 只返回状态相关信息
+    res.status(200).json({
+      success: true,
+      data: {
+        submissionId: submission?.id,
+        status: submission?.status,
+        submittedAt: submission?.submittedAt,
+        reviewNotes: submission?.reviewNotes || ''
+      }
+    });
+
+  } catch (error) {
+    console.error('获取提交状态失败:', error);
+    
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误',
+      details: error instanceof Error ? error.message : '未知错误'
+    });
+  }
+});
+
+// 获取所有提交的统计信息（Firestore版本）
+export const getSubmissionStats = functions.https.onRequest(async (req, res) => {
+  // 设置CORS头
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  try {
+    if (req.method !== 'GET') {
+      res.status(405).json({ 
+        success: false, 
+        error: '只允许GET请求' 
+      });
+      return;
+    }
+
+    // 从Firestore获取所有提交
+    const snapshot = await db.collection('submissions').orderBy('submittedAt', 'desc').get();
+    const submissions = snapshot.docs.map(doc => doc.data());
+
+    // 统计数据
+    const total = submissions.length;
+    const pending = submissions.filter(item => item.status === 'pending').length;
+    const approved = submissions.filter(item => item.status === 'approved').length;
+    const rejected = submissions.filter(item => item.status === 'rejected').length;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        total,
+        pending,
+        approved,
+        rejected,
+        recentSubmissions: submissions.slice(0, 5) // 最近5个提交
+      }
+    });
+
+  } catch (error) {
+    console.error('获取统计信息失败:', error);
+    
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误',
+      details: error instanceof Error ? error.message : '未知错误'
+    });
+  }
+});
+
+// 查看所有提交的详细数据（管理员功能，Firestore版本）
+export const getAllSubmissions = functions.https.onRequest(async (req, res) => {
+  // 设置CORS头
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  try {
+    if (req.method !== 'GET') {
+      res.status(405).json({ 
+        success: false, 
+        error: '只允许GET请求' 
+      });
+      return;
+    }
+
+    // 获取查询参数
+    const limit = parseInt(req.query.limit as string) || 50; // 默认限制50条
+    const status = req.query.status as string;
+
+    // 构建查询
+    let query = db.collection('submissions').orderBy('submittedAt', 'desc');
+
+    // 按状态过滤
+    if (status && ['pending', 'approved', 'rejected'].includes(status)) {
+      query = query.where('status', '==', status);
+    }
+
+    // 限制数量
+    query = query.limit(limit);
+
+    const snapshot = await query.get();
+    const submissions = snapshot.docs.map(doc => doc.data());
+
+    res.status(200).json({
+      success: true,
+      data: {
+        submissions,
+        pagination: {
+          total: submissions.length,
+          limit
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('获取所有提交失败:', error);
+    
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误',
+      details: error instanceof Error ? error.message : '未知错误'
+    });
+  }
+});
+
+// 简单的数据查看页面（HTML格式，Firestore版本）
+export const viewSubmissions = functions.https.onRequest(async (req, res) => {
+  // 设置CORS头
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  try {
+    if (req.method !== 'GET') {
+      res.status(405).json({ 
+        success: false, 
+        error: '只允许GET请求' 
+      });
+      return;
+    }
+
+    // 从Firestore获取数据
+    const snapshot = await db.collection('submissions').orderBy('submittedAt', 'desc').get();
+    const submissions = snapshot.docs.map(doc => doc.data());
+
+    // 生成HTML页面
+    const html = `
+    <!DOCTYPE html>
+    <html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>提交数据查看</title>
         <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .header { background-color: #8B4513; color: white; padding: 20px; text-align: center; }
-          .submission { border: 1px solid #ddd; margin: 20px 0; padding: 15px; border-radius: 5px; }
-          .field { margin: 10px 0; }
-          .label { font-weight: bold; color: #8B4513; }
-          .difficulty-1 { border-left: 4px solid #28a745; }
-          .difficulty-2 { border-left: 4px solid #ffc107; }
-          .difficulty-3 { border-left: 4px solid #dc3545; }
-          .summary { background-color: #f8f9fa; padding: 15px; margin: 20px 0; border-radius: 5px; }
+            body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+            .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+            .header { text-align: center; margin-bottom: 30px; }
+            .stats { display: flex; justify-content: space-around; margin-bottom: 20px; }
+            .stat-card { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; }
+            .submission { border: 1px solid #ddd; margin: 10px 0; padding: 15px; border-radius: 8px; background: #fafafa; }
+            .submission-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+            .submission-id { font-weight: bold; color: #007bff; }
+            .status { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+            .status.pending { background: #fff3cd; color: #856404; }
+            .status.approved { background: #d4edda; color: #155724; }
+            .status.rejected { background: #f8d7da; color: #721c24; }
+            .field { margin: 8px 0; }
+            .field-label { font-weight: bold; color: #555; }
+            .field-value { margin-left: 10px; }
+            .refresh-btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+            .refresh-btn:hover { background: #0056b3; }
         </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>HistBench Submissions Report</h1>
-          <p>${currentDate}</p>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>📊 提交数据查看 (Firestore版本)</h1>
+                <button class="refresh-btn" onclick="location.reload()">🔄 刷新数据</button>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <h3>总提交数</h3>
+                    <div style="font-size: 24px; font-weight: bold; color: #007bff;">${submissions.length}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>待审核</h3>
+                    <div style="font-size: 24px; font-weight: bold; color: #ffc107;">${submissions.filter(s => s.status === 'pending').length}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>已通过</h3>
+                    <div style="font-size: 24px; font-weight: bold; color: #28a745;">${submissions.filter(s => s.status === 'approved').length}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>已拒绝</h3>
+                    <div style="font-size: 24px; font-weight: bold; color: #dc3545;">${submissions.filter(s => s.status === 'rejected').length}</div>
+                </div>
+            </div>
+
+            <div id="submissions">
+                ${submissions.length === 0 ? '<p style="text-align: center; color: #666; font-size: 18px;">暂无提交数据</p>' : 
+                  submissions.map(submission => `
+                    <div class="submission">
+                        <div class="submission-header">
+                            <span class="submission-id">${submission.id}</span>
+                            <span class="status ${submission.status}">${getStatusText(submission.status)}</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-label">问题内容:</span>
+                            <span class="field-value">${submission.questionText}</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-label">答案:</span>
+                            <span class="field-value">${submission.answer}</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-label">难度级别:</span>
+                            <span class="field-value">Level ${submission.difficulty}</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-label">答题类型:</span>
+                            <span class="field-value">${submission.answerType}</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-label">主题方向:</span>
+                            <span class="field-value">${submission.thematicDirection}</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-label">贡献者:</span>
+                            <span class="field-value">${submission.contributorName} (${submission.contributorAffiliation})</span>
+                        </div>
+                        <div class="field">
+                            <span class="field-label">提交时间:</span>
+                            <span class="field-value">${new Date(submission.submittedAt).toLocaleString('zh-CN')}</span>
+                        </div>
+                        ${submission.explanation ? `
+                        <div class="field">
+                            <span class="field-label">解释说明:</span>
+                            <span class="field-value">${submission.explanation}</span>
+                        </div>` : ''}
+                        ${submission.sourceReference ? `
+                        <div class="field">
+                            <span class="field-label">资料来源:</span>
+                            <span class="field-value">${submission.sourceReference}</span>
+                        </div>` : ''}
+                        ${submission.requiredData ? `
+                        <div class="field">
+                            <span class="field-label">所需数据:</span>
+                            <span class="field-value">${submission.requiredData}</span>
+                        </div>` : ''}
+                    </div>
+                  `).join('')}
+            </div>
         </div>
         
-        <div class="summary">
-          <h2>Summary</h2>
-          <p><strong>${submissionCount}</strong> new submissions received</p>
-          <ul>
-            <li>Level 1 (Basic): ${submissions.filter(s => s.difficulty === '1').length}</li>
-            <li>Level 2 (Intermediate): ${submissions.filter(s => s.difficulty === '2').length}</li>
-            <li>Level 3 (Advanced): ${submissions.filter(s => s.difficulty === '3').length}</li>
-          </ul>
-          <ul>
-            <li>Exact Match: ${submissions.filter(s => s.answerType === 'Exact Match').length}</li>
-            <li>Multiple Choice: ${submissions.filter(s => s.answerType === 'Multiple Choice').length}</li>
-          </ul>
-        </div>
-  `;
-
-  submissions.forEach((submission, index) => {
-    const submittedDate = submission.submittedAt?.toDate ? 
-      new Date(submission.submittedAt.toDate()).toLocaleString() : 
-      'Unknown';
-      
-    html += `
-      <div class="submission difficulty-${submission.difficulty}">
-        <h3>Submission ${index + 1}</h3>
-        <div class="field">
-          <span class="label">Difficulty:</span> Level ${submission.difficulty}
-        </div>
-        <div class="field">
-          <span class="label">Answer Type:</span> ${submission.answerType}
-        </div>
-        <div class="field">
-          <span class="label">Question:</span><br>
-          ${submission.questionText}
-        </div>
-        <div class="field">
-          <span class="label">Required Data:</span><br>
-          ${submission.requiredData}
-        </div>
-        <div class="field">
-          <span class="label">Answer:</span> ${submission.answer}
-        </div>
-        <div class="field">
-          <span class="label">Explanation:</span><br>
-          ${submission.explanation}
-        </div>
-        <div class="field">
-          <span class="label">Source Reference:</span><br>
-          ${submission.sourceReference}
-        </div>
-        <div class="field">
-          <span class="label">Thematic Direction:</span><br>
-          ${submission.thematicDirection}
-        </div>
-        <div class="field">
-          <span class="label">Contributor:</span> ${submission.contributorName} (${submission.contributorAffiliation})
-        </div>
-        <div class="field">
-          <span class="label">Submitted:</span> ${submittedDate}
-        </div>
-      </div>
-    `;
-  });
-
-  html += `
-      </body>
+        <script>
+            function getStatusText(status) {
+                switch(status) {
+                    case 'pending': return '待审核';
+                    case 'approved': return '已通过';
+                    case 'rejected': return '已拒绝';
+                    default: return status;
+                }
+            }
+        </script>
+    </body>
     </html>
-  `;
+    `;
 
-  return html;
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.status(200).send(html);
+
+  } catch (error) {
+    console.error('生成查看页面失败:', error);
+    
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误',
+      details: error instanceof Error ? error.message : '未知错误'
+    });
+  }
+});
+
+// 辅助函数
+function getStatusText(status: string): string {
+  switch(status) {
+    case 'pending': return '待审核';
+    case 'approved': return '已通过';
+    case 'rejected': return '已拒绝';
+    default: return status;
+  }
 }
-
-/**
- * Send email using your preferred service
- * This is a placeholder implementation
- */
-async function sendEmail(to: string, subject: string, htmlContent: string): Promise<void> {
-  // Placeholder for email sending logic
-  // You would integrate with SendGrid, Mailgun, or similar service here
-  console.log(`Sending email to: ${to}`);
-  console.log(`Subject: ${subject}`);
-  console.log(`Content length: ${htmlContent.length} characters`);
-  
-  // Example with SendGrid (you would need to install @sendgrid/mail):
-  /*
-  const sgMail = require('@sendgrid/mail');
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-  
-  const msg = {
-    to: to,
-    from: 'noreply@histai.com',
-    subject: subject,
-    html: htmlContent,
-  };
-  
-  await sgMail.send(msg);
-  */
-} 

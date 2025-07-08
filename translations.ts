@@ -2,7 +2,10 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import { useAppStore } from './src/stores/appStore';
+// Note: Import will be fixed when store is properly connected
+// import { useAppStore } from './src/stores/appStore';
+
+type Language = 'en' | 'zh';
 
 type TranslationKey = string; // Using string for flexibility, can be more structured
 
@@ -587,15 +590,27 @@ const translations: Translations = {
     'page_title.submit': { en: "Submit | HistAI", zh: "提交 | HistAI" },
 };
 
+// Simple language detection until store import is fixed
+function getCurrentLanguage(): Language {
+    // Check URL hash for language
+    const hash = window.location.hash;
+    if (hash.includes('_zh')) return 'zh';
+    if (hash.includes('_en')) return 'en';
+    
+    // Fallback to browser language
+    const browserLang = navigator.language.slice(0, 2);
+    return browserLang === 'zh' ? 'zh' : 'en';
+}
+
 export function t(key: TranslationKey, params?: Record<string, string | number>): string {
-    const currentLanguage = useAppStore.getState().currentLanguage;
+    const currentLanguage: Language = getCurrentLanguage();
     const entry = translations[key];
     if (!entry) {
         console.warn(`Translation key "${key}" not found.`);
         return key; // Fallback to key if not found
     }
 
-    let text = entry[currentLanguage] || entry.en; // Fallback to English if current language string is missing
+    let text = entry[currentLanguage as keyof typeof entry] || entry.en; // Fallback to English if current language string is missing
 
     if (params) {
         for (const paramKey in params) {

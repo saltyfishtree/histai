@@ -528,7 +528,7 @@ async function handleFormSubmit(event: Event) {
     const errorContainer = document.getElementById('form-validation-error') as HTMLElement;
     const statusContainer = document.getElementById('submission-status-container') as HTMLElement;
     
-    // Collect form data
+    // Collect form data (excluding file upload for now as it's not supported by our API)
     const formData: FormData = {
         difficulty: (document.getElementById('difficulty') as HTMLSelectElement).value,
         answerType: (document.getElementById('answerType') as HTMLSelectElement).value,
@@ -540,7 +540,7 @@ async function handleFormSubmit(event: Event) {
         thematicDirection: (document.getElementById('thematicDirection') as HTMLTextAreaElement).value,
         contributorName: (document.getElementById('contributorName') as HTMLInputElement).value,
         contributorAffiliation: (document.getElementById('contributorAffiliation') as HTMLInputElement).value,
-        fileUpload: (document.getElementById('fileUpload') as HTMLInputElement).files?.[0]
+        fileUpload: (document.getElementById('fileUpload') as HTMLInputElement).files?.[0] // 需要特殊处理后期
     };
 
     // Validate form data using Firebase service
