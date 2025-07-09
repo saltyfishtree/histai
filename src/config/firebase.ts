@@ -4,6 +4,7 @@
  */
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 
 // Firebase configuration using environment variables
 const firebaseConfig = {
@@ -24,8 +25,9 @@ if (getApps().length === 0) {
   firebaseApp = getApps()[0];
 }
 
-// Initialize Firestore
+// Initialize Firebase services
 export const db: Firestore = getFirestore(firebaseApp);
+export const storage: FirebaseStorage = getStorage(firebaseApp);
 
 // Export app for other Firebase services
 export { firebaseApp };

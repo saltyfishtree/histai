@@ -26,4 +26,4 @@ cd ..
 
 # 启动Firebase模拟器 (包含 functions, firestore, storage)
 echo "Starting Firebase emulators..."
-firebase emulators:start --only functions,firestore,storage 
+firebase emulators:start # --only functions,firestore,storage 

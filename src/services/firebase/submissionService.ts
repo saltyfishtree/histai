@@ -4,10 +4,17 @@
  */
 import { FormData, ApiResponse } from '../../types/types';
 
-// Firebase Functions URL - 在生产环境中应该是实际的函数URL
-const FUNCTIONS_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://us-central1-histagent.cloudfunctions.net' 
-  : 'http://localhost:5001/histagent/us-central1';
+// Firebase Functions URL - 在开发环境中始终使用本地模拟器
+// 只有在真正部署到生产环境时才使用生产URL
+const FUNCTIONS_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://127.0.0.1:5003/test/us-central1'
+  : 'https://us-central1-histagent.cloudfunctions.net';
+
+// 调试信息
+console.log('🔧 Environment DEBUG:');
+console.log('- NODE_ENV:', process.env.NODE_ENV);
+console.log('- hostname:', window.location.hostname);
+console.log('- FUNCTIONS_BASE_URL:', FUNCTIONS_BASE_URL);
 
 // Extended submission data with metadata
 export interface SubmissionData extends FormData {
@@ -40,7 +47,11 @@ export async function submitToFirestore(formData: FormData): Promise<ApiResponse
     };
 
     // Call Firebase Function
-    const response = await fetch(`${FUNCTIONS_BASE_URL}/submitQuestion`, {
+    const requestUrl = `${FUNCTIONS_BASE_URL}/submitQuestion`;
+    console.log('🚀 Sending request to:', requestUrl);
+    console.log('📤 Request data:', submissionData);
+    
+    const response = await fetch(requestUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

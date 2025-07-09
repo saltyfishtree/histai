@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { GoogleGenAI } from "@google/genai";
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../../config/firebase';
 import { t } from '../../../translations';
 import { submitToFirestore, validateSubmissionData } from '../../services/firebase/submissionService';
 import { FormData } from '../../types/types';
@@ -522,13 +524,50 @@ function renderStepContent(step: number): string {
     }
 }
 
+// 文件上传到 Firebase Storage 的函数
+async function uploadFileToStorage(file: File, submissionId: string): Promise<{ url: string; metadata: any }> {
+    try {
+        // 生成唯一的文件路径
+        const timestamp = Date.now();
+        const fileName = `${timestamp}_${file.name}`;
+        const filePath = `submissions/${submissionId}/${fileName}`;
+        
+        // 创建存储引用
+        const storageRef = ref(storage, filePath);
+        
+        // 上传文件
+        const snapshot = await uploadBytes(storageRef, file);
+        
+        // 获取下载URL
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        
+        return {
+            url: downloadURL,
+            metadata: {
+                fileName: file.name,
+                fileSize: file.size,
+                fileType: file.type,
+                uploadPath: filePath
+            }
+        };
+    } catch (error) {
+        console.error('文件上传失败:', error);
+        throw new Error(`文件上传失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+}
+
 async function handleFormSubmit(event: Event) {
     event.preventDefault();
     const form = document.getElementById('submission-form') as HTMLFormElement;
     const errorContainer = document.getElementById('form-validation-error') as HTMLElement;
     const statusContainer = document.getElementById('submission-status-container') as HTMLElement;
     
-    // Collect form data (excluding file upload for now as it's not supported by our API)
+    // 获取文件输入
+    const fileInput = document.getElementById('fileUpload') as HTMLInputElement;
+    const selectedFile = fileInput.files?.[0];
+    const hasFile = selectedFile !== undefined;
+    
+    // 收集表单数据
     const formData: FormData = {
         difficulty: (document.getElementById('difficulty') as HTMLSelectElement).value,
         answerType: (document.getElementById('answerType') as HTMLSelectElement).value,
@@ -540,7 +579,7 @@ async function handleFormSubmit(event: Event) {
         thematicDirection: (document.getElementById('thematicDirection') as HTMLTextAreaElement).value,
         contributorName: (document.getElementById('contributorName') as HTMLInputElement).value,
         contributorAffiliation: (document.getElementById('contributorAffiliation') as HTMLInputElement).value,
-        fileUpload: (document.getElementById('fileUpload') as HTMLInputElement).files?.[0] // 需要特殊处理后期
+        fileUpload: selectedFile
     };
 
     // Validate form data using Firebase service
@@ -554,17 +593,73 @@ async function handleFormSubmit(event: Event) {
     errorContainer.style.display = 'none';
     form.style.display = 'none';
 
-    // Show loading spinner
-    statusContainer.innerHTML = `
-        <div id="submission-status" class="loading">
-            <div class="spinner"></div>
-            <p>${t('submit.messages.submitting_info')}</p>
-        </div>
-    `;
+    // 生成临时ID用于文件路径（后端会生成最终的提交ID）
+    const tempId = 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+    // 显示加载状态
+    if (hasFile) {
+        statusContainer.innerHTML = `
+            <div id="submission-status" class="loading">
+                <div class="spinner"></div>
+                <p>${t('submit.messages.uploading_file')}</p>
+            </div>
+        `;
+    } else {
+        statusContainer.innerHTML = `
+            <div id="submission-status" class="loading">
+                <div class="spinner"></div>
+                <p>${t('submit.messages.submitting_info')}</p>
+            </div>
+        `;
+    }
 
     try {
-        // Submit data to Firebase Firestore
-        const submissionResult = await submitToFirestore(formData);
+        // 如果有文件，先上传文件
+        if (hasFile && selectedFile) {
+            console.log('开始上传文件:', selectedFile.name);
+            
+            const fileUploadResult = await uploadFileToStorage(selectedFile, tempId);
+            
+            // 将文件信息添加到表单数据
+            formData.fileUrl = fileUploadResult.url;
+            formData.fileName = fileUploadResult.metadata.fileName;
+            formData.fileSize = fileUploadResult.metadata.fileSize;
+            formData.fileType = fileUploadResult.metadata.fileType;
+            
+            console.log('文件上传成功:', fileUploadResult.url);
+            
+            // 更新状态为提交表单
+            statusContainer.innerHTML = `
+                <div id="submission-status" class="loading">
+                    <div class="spinner"></div>
+                    <p>${t('submit.messages.submitting_info')}</p>
+                </div>
+            `;
+        }
+
+        // 清理表单数据，移除不需要的字段（如fileUpload）和undefined值
+        const cleanedFormData: FormData = {
+            difficulty: formData.difficulty,
+            answerType: formData.answerType,
+            questionText: formData.questionText,
+            requiredData: formData.requiredData,
+            answer: formData.answer,
+            explanation: formData.explanation,
+            sourceReference: formData.sourceReference,
+            thematicDirection: formData.thematicDirection,
+            contributorName: formData.contributorName,
+            contributorAffiliation: formData.contributorAffiliation,
+            // 只有在文件URL存在时才包含文件相关字段
+            ...(formData.fileUrl && {
+                fileUrl: formData.fileUrl,
+                fileName: formData.fileName,
+                fileSize: formData.fileSize,
+                fileType: formData.fileType
+            })
+        };
+
+        // 提交数据到 Firebase Firestore
+        const submissionResult = await submitToFirestore(cleanedFormData);
         
         if (!submissionResult.success) {
             throw new Error(submissionResult.error || 'Failed to save submission');

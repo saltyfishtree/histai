@@ -14,6 +14,12 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@11 && export PATH=$JAVA_HOME/bin:$PAT
 
 Node.js版本（v22.17.0）和firebase-functions v5.1.1的组合
 
+自动发送邮件功能
+
+1. 因此代码使用了生产环境的URL https://us-central1-histagent.cloudfunctions.net
+2. 而端口5173（开发服务器）使用的是实时编译，NODE_ENV为undefined，所以使用本地URL
+
+！ 前端编译自带了 环境信息
 
 ### ✅ Firebase集成
 

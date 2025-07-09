@@ -22,6 +22,11 @@ export interface FormData {
   contributorName: string;
   contributorAffiliation: string;
   fileUpload?: File;
+  // 文件上传后的信息（用于提交到后端）
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
+  fileType?: string;
 }
 
 // Sample question types

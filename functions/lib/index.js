@@ -85,6 +85,17 @@ exports.submitQuestion = functions.https.onRequest(async (req, res) => {
             submittedAt: new Date().toISOString(),
             status: 'pending'
         };
+        // 只有当文件数据存在时才添加附件信息
+        if (submissionData.fileUrl && submissionData.fileName) {
+            questionData.attachments = {
+                fileUrl: submissionData.fileUrl,
+                fileName: submissionData.fileName,
+                fileSize: submissionData.fileSize || 0,
+                fileType: submissionData.fileType || 'unknown',
+                uploadedAt: new Date().toISOString()
+            };
+            console.log('文件附件已添加:', submissionData.fileName);
+        }
         // 保存到Firestore数据库
         await db.collection('submissions').doc(submissionId).set(questionData);
         console.log('新问题提交成功:', submissionId);

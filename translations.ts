@@ -569,11 +569,12 @@ const translations: Translations = {
     'submit.buttons.submit': { en: "Submit Question", zh: "提交问题" },
     'submit.buttons.submitting': { en: "Submitting...", zh: "提交中..." },
 
-    'submit.messages.validation_error': { en: "Please fill out all required fields before submitting.", zh: "提交前请填写所有必填字段。" },
-    'submit.messages.submitting_info': { en: "Submitting your question to the HistBench team for review.", zh: "正在将您的问题提交给HistBench团队进行审核。" },
-    'submit.messages.success_title': { en: "Thank you for your contribution!", zh: "感谢您的贡献！" },
-    'submit.messages.error_title': { en: "Submission Failed", zh: "提交失败" },
-    'submit.messages.api_error': { en: "An unexpected error occurred. Please try again later.", zh: "发生意外错误。请稍后再试。" },
+      'submit.messages.validation_error': { en: "Please fill out all required fields before submitting.", zh: "提交前请填写所有必填字段。" },
+  'submit.messages.uploading_file': { en: "Uploading your file...", zh: "正在上传文件..." },
+  'submit.messages.submitting_info': { en: "Submitting your question to the HistBench team for review.", zh: "正在将您的问题提交给HistBench团队进行审核。" },
+  'submit.messages.success_title': { en: "Thank you for your contribution!", zh: "感谢您的贡献！" },
+  'submit.messages.error_title': { en: "Submission Failed", zh: "提交失败" },
+  'submit.messages.api_error': { en: "An unexpected error occurred. Please try again later.", zh: "发生意外错误。请稍后再试。" },
 
 
     // Image Modal
