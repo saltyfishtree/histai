@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.viewSubmissions = exports.getAllSubmissions = exports.getSubmissionStats = exports.getSubmissionStatus = exports.submitQuestion = exports.healthCheck = void 0;
+exports.testEmailSending = exports.getEmailHistory = exports.sendDailyReportManually = exports.dailyReportScheduler = exports.viewSubmissions = exports.getAllSubmissions = exports.getSubmissionStats = exports.getSubmissionStatus = exports.submitQuestion = exports.healthCheck = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-// 初始化Firebase Admin SDK
+const emailService_1 = require("./emailService");
+// 初始化Firebase Admin SDK 初始化之后才能创建DB等
 admin.initializeApp();
 // 获取Firestore数据库实例
 // 在模拟器环境中，这会自动连接到本地Firestore模拟器
@@ -435,4 +436,180 @@ function getStatusText(status) {
         default: return status;
     }
 }
+// ==================== 邮件发送功能 ====================
+// 每日定时发送邮件报告（每天8点执行）
+exports.dailyReportScheduler = functions.pubsub.schedule('0 8 * * *')
+    .timeZone('Asia/Shanghai') // 设置为北京时间
+    .onRun(async (context) => {
+    try {
+        console.log('🕐 开始执行每日邮件报告任务:', new Date().toLocaleString('zh-CN'));
+        // 获取当天新增的提交数据
+        const todaySubmissions = await (0, emailService_1.getDailySubmissions)();
+        if (todaySubmissions.length === 0) {
+            console.log('📭 今日无新增提交，跳过邮件发送');
+            return null;
+        }
+        // 发送邮件报告
+        await (0, emailService_1.sendDailyReport)(todaySubmissions);
+        console.log('✅ 每日邮件报告发送完成');
+        return null;
+    }
+    catch (error) {
+        console.error('❌ 每日邮件报告发送失败:', error);
+        // 记录错误但不抛出，避免影响其他任务
+        return null;
+    }
+});
+// 手动触发每日邮件报告（API）
+exports.sendDailyReportManually = functions.https.onRequest(async (req, res) => {
+    // 设置CORS头
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') {
+        res.status(204).send('');
+        return;
+    }
+    try {
+        if (req.method !== 'POST') {
+            res.status(405).json({
+                success: false,
+                error: '只允许POST请求'
+            });
+            return;
+        }
+        console.log('🔧 手动触发每日邮件报告');
+        // 获取查询参数，支持指定日期
+        const targetDate = req.body.date || new Date().toISOString().split('T')[0];
+        console.log('📅 目标日期:', targetDate);
+        // 获取指定日期的提交数据
+        const submissions = await (0, emailService_1.getDailySubmissions)();
+        if (submissions.length === 0) {
+            res.status(200).json({
+                success: true,
+                message: '指定日期无新增提交，未发送邮件',
+                data: {
+                    date: targetDate,
+                    submissionCount: 0
+                }
+            });
+            return;
+        }
+        // 发送邮件报告
+        await (0, emailService_1.sendDailyReport)(submissions);
+        res.status(200).json({
+            success: true,
+            message: '邮件报告发送成功',
+            data: {
+                date: targetDate,
+                submissionCount: submissions.length
+            }
+        });
+    }
+    catch (error) {
+        console.error('手动发送邮件报告失败:', error);
+        res.status(500).json({
+            success: false,
+            error: '发送邮件报告失败',
+            details: error instanceof Error ? error.message : '未知错误'
+        });
+    }
+});
+// 获取邮件发送历史
+exports.getEmailHistory = functions.https.onRequest(async (req, res) => {
+    // 设置CORS头
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') {
+        res.status(204).send('');
+        return;
+    }
+    try {
+        if (req.method !== 'GET') {
+            res.status(405).json({
+                success: false,
+                error: '只允许GET请求'
+            });
+            return;
+        }
+        const limit = parseInt(req.query.limit) || 30;
+        const snapshot = await db.collection('emailHistory')
+            .orderBy('timestamp', 'desc')
+            .limit(limit)
+            .get();
+        const emailHistory = snapshot.docs.map(doc => (Object.assign({ id: doc.id }, doc.data())));
+        res.status(200).json({
+            success: true,
+            data: {
+                history: emailHistory,
+                total: emailHistory.length
+            }
+        });
+    }
+    catch (error) {
+        console.error('获取邮件历史失败:', error);
+        res.status(500).json({
+            success: false,
+            error: '获取邮件历史失败',
+            details: error instanceof Error ? error.message : '未知错误'
+        });
+    }
+});
+// 测试邮件发送功能
+exports.testEmailSending = functions.https.onRequest(async (req, res) => {
+    // 设置CORS头
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') {
+        res.status(204).send('');
+        return;
+    }
+    try {
+        if (req.method !== 'POST') {
+            res.status(405).json({
+                success: false,
+                error: '只允许POST请求'
+            });
+            return;
+        }
+        console.log('🧪 测试邮件发送功能');
+        // 创建测试数据
+        const testSubmissions = [
+            {
+                id: 'test_sub_' + Date.now(),
+                difficulty: 2,
+                answerType: 'Exact Match',
+                questionText: '这是一个测试问题，用于验证邮件发送功能是否正常工作。',
+                requiredData: '这是测试所需的数据描述。',
+                answer: '这是测试问题的答案。',
+                explanation: '这是对测试问题的详细解释说明。',
+                sourceReference: '测试资料来源',
+                thematicDirection: '测试主题方向',
+                contributorName: '测试贡献者',
+                contributorAffiliation: '测试机构',
+                submittedAt: new Date().toISOString(),
+                status: 'pending'
+            }
+        ];
+        // 发送测试邮件
+        await (0, emailService_1.sendDailyReport)(testSubmissions);
+        res.status(200).json({
+            success: true,
+            message: '测试邮件发送成功',
+            data: {
+                testSubmissionsCount: testSubmissions.length
+            }
+        });
+    }
+    catch (error) {
+        console.error('测试邮件发送失败:', error);
+        res.status(500).json({
+            success: false,
+            error: '测试邮件发送失败',
+            details: error instanceof Error ? error.message : '未知错误'
+        });
+    }
+});
 //# sourceMappingURL=index.js.map

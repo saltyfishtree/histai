@@ -21,6 +21,8 @@ Node.js版本（v22.17.0）和firebase-functions v5.1.1的组合
 
 ！ 前端编译自带了 环境信息
 
+brevo 定时发送邮件
+
 ### ✅ Firebase集成
 
 - **数据持久化**: 用户提交的题目现在会自动保存到Firebase Firestore
