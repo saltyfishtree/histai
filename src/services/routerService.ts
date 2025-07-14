@@ -17,7 +17,6 @@ const appFooter = document.getElementById('app-footer')!;
 import { renderHomePageContent } from '../pages/HomePage';
 import { renderHistAgentPageContent } from '../pages/core/HistAgentPage';
 import { renderHistBenchPageContent, setupChartEventListeners } from '../pages/core/HistBenchPage';
-import { renderImpactPageContent } from '../pages/about/ImpactPage';
 import { renderAuthorsPageContent } from '../pages/about/AuthorsPage';
 import { renderSubmitPageContent, setupSubmitPageListeners } from '../pages/contribute/SubmitPage';
 import { reinitializeMotion } from '../components/motion/MotionSystem';
@@ -31,7 +30,7 @@ class RouterService {
     const page = (parts[0] || 'home') as Page;
     const lang = (parts[1] || this.store.getState().currentLanguage) as Language;
 
-    const validPages: Page[] = ['home', 'about', 'histbench', 'impact', 'authors', 'submit'];
+    const validPages: Page[] = ['home', 'about', 'histbench', 'authors', 'submit'];
     const validLanguages: Language[] = ['en', 'zh'];
 
     const validatedPage = validPages.includes(page) ? page : 'home';
@@ -95,9 +94,7 @@ class RouterService {
       case 'histbench':
         contentHTML = renderHistBenchPageContent();
         break;
-      case 'impact':
-        contentHTML = renderImpactPageContent();
-        break;
+  
       case 'authors':
         contentHTML = renderAuthorsPageContent();
         break;

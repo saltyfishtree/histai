@@ -50,6 +50,42 @@ export function renderHistAgentPageContent(): string {
                 </div>
                 <p>${t('histagent.tackling.p_perf_conclusion')}</p>
             </section>
+
+            <section class="content-section">
+                <h2>${t('impact.advancing.title')}</h2>
+                <img src="/resource/research.png" alt="${t('impact.advancing.img_alt')}" class="content-image">
+                <p>${t('impact.advancing.p1')}</p>
+                
+                <h4>${t('impact.advancing.h_researchers')}</h4>
+                <p>${t('impact.advancing.p_researchers')}</p>
+                <ul>
+                    <li>${t('impact.advancing.li_researchers_1')}</li>
+                    <li>${t('impact.advancing.li_researchers_2')}</li>
+                </ul>
+
+                <h4>${t('impact.advancing.h_educators')}</h4>
+                <p>${t('impact.advancing.p_educators')}</p>
+                <ul>
+                    <li>${t('impact.advancing.li_educators_1')}</li>
+                    <li>${t('impact.advancing.li_educators_2')}</li>
+                    <li>${t('impact.advancing.li_educators_3')}</li>
+                </ul>
+
+                <h4>${t('impact.advancing.h_public')}</h4>
+                <p>${t('impact.advancing.p_public')}</p>
+                <ul>
+                    <li>${t('impact.advancing.li_public_1')}</li>
+                    <li>${t('impact.advancing.li_public_2')}</li>
+                    <li>${t('impact.advancing.li_public_3')}</li>
+                </ul>
+            </section>
+
+            <section class="content-section">
+                <h2>${t('impact.contributions.title')}</h2>
+                
+                <h4>${t('impact.contributions.p_histagent')}</h4>
+                <p>${t('impact.contributions.p_histagent_desc').replace(/\n/g, '<br>')}</p>
+            </section>
         </div>
     `;
 } 

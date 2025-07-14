@@ -24,7 +24,7 @@ const translations: Translations = {
     'header.nav.histagent': { en: "HistAgent", zh: "HistAgent" },
     'header.nav.impact': { en: "Impact & Vision", zh: "影响与展望" },
     'header.nav.team': { en: "Team", zh: "团队" },
-    'header.nav.submit': { en: "Submit a Question", zh: "提交问题" },
+    'header.nav.submit': { en: "Explore Questions", zh: "探索题目" },
     'header.lang.en': { en: "English", zh: "English" },
     'header.lang.zh': { en: "中文", zh: "中文" },
 
@@ -504,14 +504,17 @@ const translations: Translations = {
     'authors.additional.p2': { en: "For a complete list of authors and detailed acknowledgements, please refer to the <a href=\"{paperLink}\" target=\"_blank\" rel=\"noopener noreferrer\">{linkText}</a>.", zh: "有关作者的完整列表和详细致谢，请参阅 <a href=\"{paperLink}\" target=\"_blank\" rel=\"noopener noreferrer\">{linkText}</a>。" },
 
     // Submit Page
-    'submit.page_title': { en: "Contribute to HistBench", zh: "为HistBench做贡献" },
-    'submit.intro.title': { en: "Challenge the Limits of AI—With Your Historical Question", zh: "用你的历史问题挑战AI的极限" },
-    'submit.intro.p1': { en: "Have you ever wondered—", zh: "你是否曾想过——" },
-    'submit.intro.p2': { en: "Can AI read obscure or extinct languages?", zh: "AI能否阅读晦涩或已消亡的语言？" },
-    'submit.intro.p3': { en: "Can it decode highly personal, stylized handwriting?", zh: "它能否解读高度个性化、风格化的手写体？" },
-    'submit.intro.p4': { en: "Can it sense the emotion and cultural undercurrents beneath historical texts?", zh: "它能否感知历史文本下的情感和文化潜流？" },
-    'submit.intro.p5': { en: "Can it reason like a scholar in handling professional historical problems?", zh: "在处理专业历史问题时，它能否像学者一样推理？" },
-    'submit.intro.join_us': { en: "Join us in redefining the possibilities of AI in historical research.", zh: "加入我们，重新定义AI在历史研究中的可能性。" },
+    'submit.page_title': { en: "Explore HistBench Questions", zh: "探索HistBench题目" },
+    'submit.intro.title': { en: "Discover the Complexity of Historical Reasoning", zh: "发现历史推理的复杂性" },
+    'submit.intro.p1': { en: "Explore diverse historical questions from around the world—", zh: "探索来自世界各地的多样化历史问题——" },
+    'submit.intro.p2': { en: "From ancient manuscripts to modern documents", zh: "从古代手稿到现代文档" },
+    'submit.intro.p3': { en: "From visual materials to audio recordings", zh: "从视觉材料到音频记录" },
+    'submit.intro.p4': { en: "From basic facts to complex analytical reasoning", zh: "从基本事实到复杂分析推理" },
+    'submit.intro.p5': { en: "See how AI tackles these challenging historical problems", zh: "了解AI如何应对这些具有挑战性的历史问题" },
+    'submit.intro.join_us': { en: "Browse through our question gallery and discover the richness of historical research.", zh: "浏览我们的题目库，发现历史研究的丰富性。" },
+
+    'submit.contribute_button': { en: "Contribute a Question", zh: "贡献题目" },
+    'submit.back_button': { en: "← Back", zh: "← 返回" },
 
     'submit.stepper.step1': { en: "Guidelines", zh: "指南" },
     'submit.stepper.step2': { en: "Examples", zh: "示例" },
@@ -534,7 +537,7 @@ const translations: Translations = {
     'submit.step1.levels.l3': { en: "<strong>Level 3:</strong> Obscure scripts/languages, handwritten documents, highly integrated multi-domain tasks.", zh: "<strong>3级：</strong>晦涩的文字/语言，手写文档，高度集成的多领域任务。" },
 
     'submit.step2.title': { en: "Step 2: Sample Gallery", zh: "第二步：示例展示" },
-    'submit.step2.gallery_title': { en: "Sample Questions", zh: "示例问题" },
+    'submit.step2.gallery_title': { en: "Question Gallery", zh: "题目库" },
     
     'submit.step3.title': { en: "Step 3: Submit Your Question", zh: "第三步：提交您的问题" },
     'submit.step3.form.title': { en: "Submit Your Question", zh: "提交您的问题" },
@@ -588,7 +591,7 @@ const translations: Translations = {
     'page_title.about': { en: "HistAgent | HistAI", zh: "HistAgent | HistAI" }, // 'about' key for HistAgent page
     'page_title.impact': { en: "Impact & Vision | HistAI", zh: "影响与展望 | HistAI" },
     'page_title.authors': { en: "Team | HistAI", zh: "团队 | HistAI" },
-    'page_title.submit': { en: "Submit | HistAI", zh: "提交 | HistAI" },
+    'page_title.submit': { en: "Explore Questions | HistAI", zh: "探索题目 | HistAI" },
 };
 
 // Simple language detection until store import is fixed

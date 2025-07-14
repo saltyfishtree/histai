@@ -438,26 +438,25 @@ function getStatusText(status) {
 }
 // ==================== 邮件发送功能 ====================
 // 每日定时发送邮件报告（每天8点执行）
-exports.dailyReportScheduler = functions.pubsub.schedule('0 8 * * *')
-    .timeZone('Asia/Shanghai') // 设置为北京时间
-    .onRun(async (context) => {
+exports.dailyReportScheduler = functions.scheduler.onSchedule({
+    schedule: '0 8 * * *',
+    timeZone: 'Asia/Shanghai'
+}, async (context) => {
     try {
         console.log('🕐 开始执行每日邮件报告任务:', new Date().toLocaleString('zh-CN'));
         // 获取当天新增的提交数据
         const todaySubmissions = await (0, emailService_1.getDailySubmissions)();
         if (todaySubmissions.length === 0) {
             console.log('📭 今日无新增提交，跳过邮件发送');
-            return null;
+            return;
         }
         // 发送邮件报告
         await (0, emailService_1.sendDailyReport)(todaySubmissions);
         console.log('✅ 每日邮件报告发送完成');
-        return null;
     }
     catch (error) {
         console.error('❌ 每日邮件报告发送失败:', error);
         // 记录错误但不抛出，避免影响其他任务
-        return null;
     }
 });
 // 手动触发每日邮件报告（API）

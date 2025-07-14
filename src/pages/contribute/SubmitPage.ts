@@ -741,28 +741,197 @@ function setupFormListeners() {
     });
 }
 
+// Add a new variable to track if we're showing the submission form
+let showSubmissionForm = false;
+
+// New function to render the sample questions section (extracted from renderStep2)
+function renderSampleQuestionsSection(): string {
+    // Reset indices whenever samples are rendered
+    sampleDataByLevel.forEach(levelSet => {
+        submitPageQuestionIndices[levelSet.level] = 0;
+    });
+    
+    const sampleQuestionCardsHTML = sampleDataByLevel.map(levelSet => renderSubmitSampleQuestionCard(levelSet)).join('');
+
+    return `
+        <section class="content-section">
+            <h2>${t('submit.step2.gallery_title')}</h2>
+            <div class="sample-levels-container">
+                ${sampleQuestionCardsHTML}
+            </div>
+        </section>
+    `;
+}
+
+// New function to render the guidelines section (extracted from renderStep1)
+function renderGuidelinesSection(): string {
+    return `
+        <section class="content-section">
+            <h2>${t('submit.step1.guidelines.title')}</h2>
+            <div class="guidelines-grid">
+                <div class="guideline-card">
+                    <h4>${t('submit.step1.types.title')}</h4>
+                    <p>${t('submit.step1.types.em')}</p>
+                    <p>${t('submit.step1.types.mc')}</p>
+                </div>
+                <div class="guideline-card">
+                    <h4>${t('submit.step1.levels.title')}</h4>
+                    <ul>
+                        <li>${t('submit.step1.levels.l1')}</li>
+                        <li>${t('submit.step1.levels.l2')}</li>
+                        <li>${t('submit.step1.levels.l3')}</li>
+                    </ul>
+                </div>
+                <div class="guideline-card">
+                    <h4>${t('submit.step1.dimensions.title')}</h4>
+                    <ul>
+                        <li>${t('submit.step1.dimensions.bibliographic')}</li>
+                        <li>${t('submit.step1.dimensions.source_id')}</li>
+                        <li>${t('submit.step1.dimensions.source_proc')}</li>
+                        <li>${t('submit.step1.dimensions.hist_analysis')}</li>
+                        <li>${t('submit.step1.dimensions.interdisciplinary')}</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+// New function to render the submission form section
+function renderSubmissionFormSection(): string {
+    return `
+        <section class="content-section submission-form-section" id="submission-form-section">
+            <h2>${t('submit.step3.form.title')}</h2>
+            <div id="submission-status-container"></div>
+            <form id="submission-form" novalidate>
+                <div class="form-group">
+                    <label for="difficulty">${t('submit.form.difficulty.label')}</label>
+                    <select id="difficulty" class="form-control" required>
+                        <option value="1">${t('submit.form.difficulty.l1')}</option>
+                        <option value="2">${t('submit.form.difficulty.l2')}</option>
+                        <option value="3">${t('submit.form.difficulty.l3')}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="answerType">${t('submit.form.answer_type.label')}</label>
+                    <select id="answerType" class="form-control" required>
+                        <option value="Exact Match">${t('submit.form.answer_type.em')}</option>
+                        <option value="Multiple Choice">${t('submit.form.answer_type.mc')}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="questionText">${t('submit.form.question.label')}</label>
+                    <textarea id="questionText" class="form-control" rows="4" placeholder="${t('submit.form.question.placeholder')}" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="requiredData">${t('submit.form.data.label')}</label>
+                    <textarea id="requiredData" class="form-control" rows="4" placeholder="${t('submit.form.data.placeholder')}" required></textarea>
+                    <div class="file-upload-group">
+                        <label for="fileUpload" class="file-upload-label">${t('submit.form.data.upload_label')}</label>
+                        <input type="file" id="fileUpload" accept="image/*,.pdf">
+                        <span id="file-name-display"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="answer">${t('submit.form.answer.label')}</label>
+                    <input type="text" id="answer" class="form-control" placeholder="${t('submit.form.answer.placeholder')}" required>
+                </div>
+                <div class="form-group">
+                    <label for="explanation">${t('submit.form.explanation.label')}</label>
+                    <textarea id="explanation" class="form-control" rows="4" placeholder="${t('submit.form.explanation.placeholder')}" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="sourceReference">${t('submit.form.source.label')}</label>
+                    <textarea id="sourceReference" class="form-control" rows="2" placeholder="${t('submit.form.source.placeholder')}" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="thematicDirection">${t('submit.form.thematic.label')}</label>
+                    <textarea id="thematicDirection" class="form-control" rows="2" placeholder="${t('submit.form.thematic.placeholder')}" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="contributorName">${t('submit.form.name.label')}</label>
+                    <input type="text" id="contributorName" class="form-control" placeholder="${t('submit.form.name.placeholder')}" required>
+                </div>
+                <div class="form-group">
+                    <label for="contributorAffiliation">${t('submit.form.affiliation.label')}</label>
+                    <input type="text" id="contributorAffiliation" class="form-control" placeholder="${t('submit.form.affiliation.placeholder')}" required>
+                </div>
+                <div id="form-validation-error"></div>
+            </form>
+            <div class="form-submit-section">
+                <button type="submit" form="submission-form" class="btn btn-primary" id="submit-btn">
+                    ${t('submit.buttons.submit_question')}
+                </button>
+            </div>
+        </section>
+    `;
+}
+
+// New function to render the submit button
+function renderSubmitButton(): string {
+    return `
+        <section class="content-section text-center">
+                         <button id="show-submission-form-btn" class="btn btn-primary" style="font-size: 1.2rem; padding: 12px 24px;">
+                 ${t('submit.contribute_button')}
+             </button>
+        </section>
+    `;
+}
+
+// New function to handle showing/hiding the submission form
+function handleShowSubmissionForm() {
+    showSubmissionForm = true;
+    const formSection = document.getElementById('submission-form-section');
+    const submitButton = document.getElementById('show-submission-form-btn');
+    
+    if (formSection && submitButton) {
+        formSection.style.display = 'block';
+        submitButton.style.display = 'none';
+        
+        // Setup form listeners
+        setupFormListeners();
+        
+        // Scroll to form
+        formSection.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
 export function renderSubmitPageContent(): string {
-    // Reset step to 1 every time the page is fully rendered
+    // Reset state
     currentStep = 1;
+    showSubmissionForm = false;
+    
     return `
         <div id="submit-page-container">
             <div class="container">
                 <h1 class="text-center">${t('submit.page_title')}</h1>
-                <section class="content-section text-center" style="background: none; border: none; box-shadow: none; padding-top: 0;">
-                    <h2 style="font-size: 1.8rem; color: var(--primary-accent); border: none;">${t('submit.intro.title')}</h2>
-                    <p><em>${t('submit.intro.p1')}</em></p>
-                    <p>
-                        ${t('submit.intro.p2')}<br>
-                        ${t('submit.intro.p3')}<br>
-                        ${t('submit.intro.p4')}<br>
-                        ${t('submit.intro.p5')}
-                    </p>
-                    <p><strong>${t('submit.intro.join_us')}</strong></p>
-                </section>
+                
+                <div id="main-content">
+                    <section class="content-section text-center" style="background: none; border: none; box-shadow: none; padding-top: 0;">
+                        <h2 style="font-size: 1.8rem; color: var(--primary-accent); border: none;">${t('submit.intro.title')}</h2>
+                        <p><em>${t('submit.intro.p1')}</em></p>
+                        <p>
+                            ${t('submit.intro.p2')}<br>
+                            ${t('submit.intro.p3')}<br>
+                            ${t('submit.intro.p4')}<br>
+                            ${t('submit.intro.p5')}
+                        </p>
+                        <p><strong>${t('submit.intro.join_us')}</strong></p>
+                    </section>
 
-                <div class="stepper-container">${renderStepper()}</div>
-                <div id="submit-step-content">${renderStepContent(currentStep)}</div>
-                <div class="submit-controls">${renderControls()}</div>
+                    ${renderSampleQuestionsSection()}
+                    ${renderGuidelinesSection()}
+                    ${renderSubmitButton()}
+                </div>
+                
+                <div id="submission-form-container" style="display: none;">
+                                         <div class="content-section text-center" style="margin-bottom: 20px;">
+                         <button id="back-to-main-btn" class="btn btn-secondary" style="margin-right: 10px;">
+                             ${t('submit.back_button')}
+                         </button>
+                     </div>
+                    ${renderSubmissionFormSection()}
+                </div>
             </div>
         </div>
     `;
@@ -770,20 +939,64 @@ export function renderSubmitPageContent(): string {
 
 export function setupSubmitPageListeners() {
     const container = document.getElementById('submit-page-container');
-    container?.removeEventListener('click', handleControlsClick);
-    container?.addEventListener('click', handleControlsClick);
     
-    // Set up navigation listeners if we're on step 2
-    if (currentStep === 2) {
-        setupSubmitSampleNavListeners();
+    // Remove existing listeners for sample navigation
+    container?.removeEventListener('click', handleSubmitSampleNavClick);
+    
+    // Add sample navigation listener
+    container?.addEventListener('click', handleSubmitSampleNavClick);
+    
+    // Setup sample navigation listeners (always needed for sample questions)
+    setupSubmitSampleNavListeners();
+    
+    // Setup show submission form button
+    const showFormBtn = document.getElementById('show-submission-form-btn');
+    showFormBtn?.addEventListener('click', () => {
+        const formContainer = document.getElementById('submission-form-container');
+        const mainContent = document.getElementById('main-content');
+        
+        if (formContainer && mainContent) {
+            // Hide main content, show form
+            mainContent.style.display = 'none';
+            formContainer.style.display = 'block';
+            
+            // Setup form submit listener
+            setupFormSubmitListener();
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    });
+    
+    // Setup back to main button
+    const backBtn = document.getElementById('back-to-main-btn');
+    backBtn?.addEventListener('click', () => {
+        const formContainer = document.getElementById('submission-form-container');
+        const mainContent = document.getElementById('main-content');
+        
+        if (formContainer && mainContent) {
+            // Show main content, hide form
+            mainContent.style.display = 'block';
+            formContainer.style.display = 'none';
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    });
+}
+
+// New function to setup form submit listener
+function setupFormSubmitListener() {
+    const form = document.getElementById('submission-form') as HTMLFormElement;
+    const submitBtn = document.getElementById('submit-btn');
+    
+    if (form) {
+        form.removeEventListener('submit', handleFormSubmit);
+        form.addEventListener('submit', handleFormSubmit);
     }
     
-    // The form itself is only present on step 3. 
-    // The `changeStep` function calls `setupFormListeners` when it renders step 3,
-    // which correctly attaches the listener to the newly created form.
-    // This check handles the initial load. Since renderSubmitPageContent resets
-    // the step to 1, this won't be called on initial page load, which is correct.
-    if (currentStep === 3) {
-        setupFormListeners();
+    if (submitBtn) {
+        submitBtn.removeEventListener('click', handleFormSubmit);
+        submitBtn.addEventListener('click', handleFormSubmit);
     }
 }

@@ -124,12 +124,12 @@ export function renderHomePageContent(): string {
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         ${StaggerContainer({
           children: `
-            <div class="grid md:grid-cols-3 gap-8">
+            <div class="grid md:grid-cols-2 gap-8">
               <a href="#histbench_${currentLanguage}" data-page="histbench" class="group block h-full">
                 <div class="bg-white rounded-xl shadow-card hover:shadow-card-hover p-6 transition-all duration-300 group-hover:-translate-y-1 h-full flex flex-col">
-                                <img src="/resource/histbench_icon.png" 
+                                <img src="/resource/pioneer.png" 
                    alt="${t('home.icon.histbench_alt')}" 
-                   class="w-16 h-18 mb-4 mx-auto">
+                   class="w-16 h-20 mb-4 mx-auto">
                   <h3 class="text-xl font-semibold text-center mb-4 text-historical-ink">
                     ${t('home.highlights.histbench.title')}
                   </h3>
@@ -153,19 +153,7 @@ export function renderHomePageContent(): string {
                 </div>
               </a>
 
-              <a href="#impact_${currentLanguage}" data-page="impact" class="group block h-full">
-                <div class="bg-white rounded-xl shadow-card hover:shadow-card-hover p-6 transition-all duration-300 group-hover:-translate-y-1 h-full flex flex-col">
-                                <img src="/resource/pioneer.png" 
-                   alt="${t('home.icon.research_alt')}" 
-                   class="w-16 h-20 mb-4 mx-auto">
-                  <h3 class="text-xl font-semibold text-center mb-4 text-historical-ink">
-                    ${t('home.highlights.advancing.title')}
-                  </h3>
-                  <p class="text-gray-600 text-center leading-relaxed flex-grow">
-                    ${t('home.highlights.advancing.text')}
-                  </p>
-                </div>
-              </a>
+
             </div>
           `
         })}
@@ -267,7 +255,6 @@ export function renderHomePageContent(): string {
     <div class="min-h-screen">
       ${heroSection}
       ${highlightsSection}
-      ${demoSection}
       ${deeperSection}
       ${contributeSection}
     </div>

@@ -16,7 +16,6 @@ export function Header({ currentPage, currentLanguage }: HeaderProps): string {
     { page: 'home' as Page, labelKey: 'header.nav.home' },
     { page: 'histbench' as Page, labelKey: 'header.nav.histbench' },
     { page: 'about' as Page, labelKey: 'header.nav.histagent' },
-    { page: 'impact' as Page, labelKey: 'header.nav.impact' },
     { page: 'authors' as Page, labelKey: 'header.nav.team' },
     { page: 'submit' as Page, labelKey: 'header.nav.submit' }
   ];
@@ -70,9 +69,9 @@ export function Header({ currentPage, currentLanguage }: HeaderProps): string {
     <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-gray-100"
             data-motion='${motionConfig}'>
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16">
+        <div class="relative flex items-center justify-center h-16">
           <!-- Logo/Title -->
-          <div class="flex-shrink-0">
+          <div class="absolute left-0 flex-shrink-0">
             <a href="#home_${currentLanguage}" 
                data-page="home" 
                class="text-2xl font-bold font-primary text-historical-ink hover:text-primary-600 transition-colors duration-200">
@@ -80,7 +79,7 @@ export function Header({ currentPage, currentLanguage }: HeaderProps): string {
             </a>
           </div>
 
-          <!-- Desktop Navigation -->
+          <!-- Desktop Navigation - Centered -->
           <nav class="hidden md:block">
             <ul class="flex items-center space-x-8">
               ${navHTML}
@@ -88,12 +87,12 @@ export function Header({ currentPage, currentLanguage }: HeaderProps): string {
           </nav>
 
           <!-- Language Switcher -->
-          <div class="hidden md:block">
+          <div class="absolute right-0 hidden md:block">
             ${langSwitcherHTML}
           </div>
 
           <!-- Mobile menu button -->
-          <div class="md:hidden">
+          <div class="absolute right-0 md:hidden">
             <button type="button" 
                     class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
                     onclick="toggleMobileMenu()">

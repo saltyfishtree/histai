@@ -12,7 +12,18 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@11 && export PATH=$JAVA_HOME/bin:$PAT
 
 核心是firebase 启动了半个后端服务
 
-Node.js版本（v22.17.0）和firebase-functions v5.1.1的组合
+Node.js版本（v22.17.0）和firebase-functions v5.1.1的
+
+### 🔥 Firebase Functions 相关 (functions/package.json)
+
+* firebase-admin: ^12.0.0
+* firebase-functions: ^5.1.1
+* typescript: ^5.3.0
+* @types/node: ^22.0.0
+* firebase: ^10.7.1
+* typescript: ~5.7.2
+* @types/node: ^22.14.0
+
 
 自动发送邮件功能
 

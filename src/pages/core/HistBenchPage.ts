@@ -314,6 +314,26 @@ export function renderHistBenchPageContent(): string {
                     <a href="${DATASET_LINK}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">${t('histbench.cta.access_dataset_hf')}</a>
                 </p>
             </section>
+
+            <section class="content-section">
+                <h2>${t('impact.pushing_frontiers.title')}</h2>
+                <p>${t('impact.pushing_frontiers.p1')}</p>
+            </section>
+
+            <section class="content-section">
+                <h2>${t('impact.future_outlook.title')}</h2>
+                <p>${t('impact.future_outlook.p_all')}</p>
+            </section>
+
+            <section class="content-section">
+                <h2>${t('impact.contributions.title')}</h2>
+                
+                <h4>${t('impact.contributions.p_histbench')}</h4>
+                <p>${t('impact.contributions.p_histbench_desc').replace(/\n/g, '<br>')}</p>
+
+                <h4>${t('impact.contributions.p_empirical')}</h4>
+                ${t('impact.contributions.perf_table_html')}
+            </section>
         </div>
     `;
 } 
