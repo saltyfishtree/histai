@@ -858,9 +858,9 @@ function renderSubmissionFormSection(): string {
                 </div>
                 <div id="form-validation-error"></div>
             </form>
-            <div class="form-submit-section">
+            <div class="form-submit-section text-center" style="margin-top: 20px;">
                 <button type="submit" form="submission-form" class="btn btn-primary" id="submit-btn">
-                    ${t('submit.buttons.submit_question')}
+                    ${t('submit.buttons.submit')}
                 </button>
             </div>
         </section>

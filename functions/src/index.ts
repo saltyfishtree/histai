@@ -1,5 +1,6 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import { onSchedule, ScheduledEvent } from 'firebase-functions/v2/scheduler';
 import { getDailySubmissions, sendDailyReport } from './emailService';
 
 // 初始化Firebase Admin SDK 初始化之后才能创建DB等
@@ -511,10 +512,10 @@ function getStatusText(status: string): string {
 // ==================== 邮件发送功能 ====================
 
 // 每日定时发送邮件报告（每天8点执行）
-export const dailyReportScheduler = functions.scheduler.onSchedule({
+export const dailyReportScheduler = onSchedule({
   schedule: '0 8 * * *',
   timeZone: 'Asia/Shanghai'
-}, async (context) => {
+}, async (context: ScheduledEvent) => {
     try {
       console.log('🕐 开始执行每日邮件报告任务:', new Date().toLocaleString('zh-CN'));
       

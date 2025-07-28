@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.testEmailSending = exports.getEmailHistory = exports.sendDailyReportManually = exports.dailyReportScheduler = exports.viewSubmissions = exports.getAllSubmissions = exports.getSubmissionStats = exports.getSubmissionStatus = exports.submitQuestion = exports.healthCheck = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const scheduler_1 = require("firebase-functions/v2/scheduler");
 const emailService_1 = require("./emailService");
 // 初始化Firebase Admin SDK 初始化之后才能创建DB等
 admin.initializeApp();
@@ -438,7 +439,7 @@ function getStatusText(status) {
 }
 // ==================== 邮件发送功能 ====================
 // 每日定时发送邮件报告（每天8点执行）
-exports.dailyReportScheduler = functions.scheduler.onSchedule({
+exports.dailyReportScheduler = (0, scheduler_1.onSchedule)({
     schedule: '0 8 * * *',
     timeZone: 'Asia/Shanghai'
 }, async (context) => {
