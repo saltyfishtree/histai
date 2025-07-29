@@ -26,3 +26,6 @@ dist-ssr
 .tasks/*
 .husky/*
 .vite/*
+
+functions/.env
+.env
