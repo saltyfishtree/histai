@@ -20,17 +20,17 @@ const EMAIL_CONFIG = {
 function getFirestore() {
     return admin.firestore();
 }
-// 初始化Brevo API客户端
-function initBrevoClient() {
-    const defaultClient = SibApiV3Sdk.ApiClient.instance;
-    const apiKey = defaultClient.authentications['api-key'];
+// 初始化Brevo事务性邮件客户端
+function initBrevoTransactionalClient() {
+    var defaultClient = SibApiV3Sdk.ApiClient.instance;
+    var apiKey = defaultClient.authentications['api-key'];
     // 从环境变量获取API密钥
     const brevoApiKey = process.env.BREVO_API_KEY;
     if (!brevoApiKey) {
         throw new Error('BREVO_API_KEY environment variable is not set');
     }
     apiKey.apiKey = brevoApiKey;
-    return new SibApiV3Sdk.EmailCampaignsApi();
+    return new SibApiV3Sdk.TransactionalEmailsApi();
 }
 // 获取当天新增的提交数据
 async function getDailySubmissions() {
@@ -56,8 +56,8 @@ async function getDailySubmissions() {
         throw error;
     }
 }
-// 生成邮件HTML内容
-function generateEmailContent(submissions) {
+// 生成简单文本格式邮件内容
+function generateSimpleTextContent(submissions) {
     const today = new Date();
     const dateStr = today.toISOString().split('T')[0];
     // 统计信息
@@ -67,287 +67,34 @@ function generateEmailContent(submissions) {
         approved: submissions.filter(s => s.status === 'approved').length,
         rejected: submissions.filter(s => s.status === 'rejected').length
     };
-    // 生成邮件内容
-    const htmlContent = `
-    <!DOCTYPE html>
-    <html lang="zh-CN">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>HistAI每日提交报告</title>
-        <style>
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                line-height: 1.6;
-                color: #333;
-                max-width: 800px;
-                margin: 0 auto;
-                padding: 20px;
-                background-color: #f5f5f5;
-            }
-            .container {
-                background: white;
-                border-radius: 8px;
-                padding: 30px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            }
-            .header {
-                text-align: center;
-                margin-bottom: 30px;
-                padding-bottom: 20px;
-                border-bottom: 2px solid #e9ecef;
-            }
-            .header h1 {
-                color: #2c3e50;
-                margin: 0;
-                font-size: 28px;
-            }
-            .header .date {
-                color: #7f8c8d;
-                font-size: 16px;
-                margin-top: 5px;
-            }
-            .stats {
-                display: flex;
-                justify-content: space-around;
-                margin-bottom: 30px;
-                padding: 20px;
-                background-color: #f8f9fa;
-                border-radius: 6px;
-            }
-            .stat-item {
-                text-align: center;
-                flex: 1;
-            }
-            .stat-number {
-                font-size: 24px;
-                font-weight: bold;
-                margin-bottom: 5px;
-            }
-            .stat-label {
-                color: #6c757d;
-                font-size: 12px;
-            }
-            .stat-total { color: #007bff; }
-            .stat-pending { color: #ffc107; }
-            .stat-approved { color: #28a745; }
-            .stat-rejected { color: #dc3545; }
-            .submission {
-                border: 1px solid #e9ecef;
-                border-radius: 6px;
-                margin-bottom: 20px;
-                padding: 20px;
-                background-color: #ffffff;
-            }
-            .submission-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 15px;
-                padding-bottom: 10px;
-                border-bottom: 1px solid #e9ecef;
-            }
-            .submission-id {
-                font-family: monospace;
-                font-size: 12px;
-                color: #6c757d;
-                background-color: #f8f9fa;
-                padding: 4px 8px;
-                border-radius: 4px;
-            }
-            .status {
-                padding: 4px 12px;
-                border-radius: 12px;
-                font-size: 12px;
-                font-weight: 500;
-            }
-            .status.pending { background-color: #fff3cd; color: #856404; }
-            .status.approved { background-color: #d4edda; color: #155724; }
-            .status.rejected { background-color: #f8d7da; color: #721c24; }
-            .field {
-                margin-bottom: 12px;
-            }
-            .field-label {
-                font-weight: 600;
-                color: #495057;
-                margin-bottom: 4px;
-                display: block;
-            }
-            .field-value {
-                color: #212529;
-                padding: 8px 12px;
-                background-color: #f8f9fa;
-                border-radius: 4px;
-                word-wrap: break-word;
-            }
-            .field-value.long {
-                max-height: 100px;
-                overflow-y: auto;
-            }
-            .contributor {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-            .contributor-name {
-                font-weight: 600;
-                color: #007bff;
-            }
-            .contributor-affiliation {
-                color: #6c757d;
-                font-size: 14px;
-            }
-            .attachment {
-                background-color: #e3f2fd;
-                border-left: 4px solid #2196f3;
-                padding: 8px 12px;
-                margin-top: 8px;
-            }
-            .attachment-name {
-                font-weight: 600;
-                color: #1976d2;
-            }
-            .attachment-size {
-                color: #666;
-                font-size: 12px;
-            }
-            .separator {
-                border: none;
-                height: 2px;
-                background: linear-gradient(to right, #e9ecef, #dee2e6, #e9ecef);
-                margin: 30px 0;
-            }
-            .footer {
-                text-align: center;
-                margin-top: 30px;
-                padding-top: 20px;
-                border-top: 1px solid #e9ecef;
-                color: #6c757d;
-                font-size: 14px;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>📊 HistAI每日提交报告</h1>
-                <div class="date">${dateStr}（共${stats.total}条新增）</div>
-            </div>
-            
-            <div class="stats">
-                <div class="stat-item">
-                    <div class="stat-number stat-total">${stats.total}</div>
-                    <div class="stat-label">新增提交</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number stat-pending">${stats.pending}</div>
-                    <div class="stat-label">待审核</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number stat-approved">${stats.approved}</div>
-                    <div class="stat-label">已通过</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number stat-rejected">${stats.rejected}</div>
-                    <div class="stat-label">已拒绝</div>
-                </div>
-            </div>
-            
-            <h2 style="color: #2c3e50; margin-bottom: 20px;">📝 所有新增提交详情</h2>
-            
-            ${submissions.map((submission, index) => `
-                <div class="submission">
-                    <div class="submission-header">
-                        <span class="submission-id">${submission.id}</span>
-                        <span class="status ${submission.status}">${getStatusText(submission.status)}</span>
-                    </div>
-                    
-                    <div class="field">
-                        <label class="field-label">提交时间</label>
-                        <div class="field-value">${new Date(submission.submittedAt).toLocaleString('zh-CN')}</div>
-                    </div>
-                    
-                    <div class="field">
-                        <label class="field-label">问题内容</label>
-                        <div class="field-value">${submission.questionText}</div>
-                    </div>
-                    
-                    <div class="field">
-                        <label class="field-label">答案</label>
-                        <div class="field-value">${submission.answer}</div>
-                    </div>
-                    
-                    <div class="field">
-                        <label class="field-label">基本信息</label>
-                        <div class="field-value">
-                            <strong>难度级别:</strong> Level ${submission.difficulty} &nbsp;|&nbsp; 
-                            <strong>答题类型:</strong> ${submission.answerType}
-                        </div>
-                    </div>
-                    
-                    ${submission.requiredData ? `
-                    <div class="field">
-                        <label class="field-label">所需数据</label>
-                        <div class="field-value long">${submission.requiredData}</div>
-                    </div>
-                    ` : ''}
-                    
-                    ${submission.explanation ? `
-                    <div class="field">
-                        <label class="field-label">解释说明</label>
-                        <div class="field-value long">${submission.explanation}</div>
-                    </div>
-                    ` : ''}
-                    
-                    ${submission.sourceReference ? `
-                    <div class="field">
-                        <label class="field-label">资料来源</label>
-                        <div class="field-value">${submission.sourceReference}</div>
-                    </div>
-                    ` : ''}
-                    
-                    ${submission.thematicDirection ? `
-                    <div class="field">
-                        <label class="field-label">主题方向</label>
-                        <div class="field-value">${submission.thematicDirection}</div>
-                    </div>
-                    ` : ''}
-                    
-                    <div class="field">
-                        <label class="field-label">贡献者</label>
-                        <div class="field-value">
-                            <div class="contributor">
-                                <span class="contributor-name">${submission.contributorName}</span>
-                                ${submission.contributorAffiliation ? `
-                                    <span class="contributor-affiliation">(${submission.contributorAffiliation})</span>
-                                ` : ''}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    ${submission.attachments ? `
-                    <div class="field">
-                        <label class="field-label">附件</label>
-                        <div class="attachment">
-                            <div class="attachment-name">📎 ${submission.attachments.fileName}</div>
-                            <div class="attachment-size">${formatFileSize(submission.attachments.fileSize)} - ${submission.attachments.fileType}</div>
-                        </div>
-                    </div>
-                    ` : ''}
-                </div>
-                ${index < submissions.length - 1 ? '<hr class="separator">' : ''}
-            `).join('')}
-            
-            <div class="footer">
-                <p>🔗 <a href="http://127.0.0.1:5003/test/us-central1/viewSubmissions">在线查看详情</a></p>
-                <p>📧 如有问题请回复此邮件</p>
-                <p><small>此邮件由 HistAI 系统自动发送于 ${new Date().toLocaleString('zh-CN')}</small></p>
-            </div>
-        </div>
-    </body>
-    </html>
-  `;
-    return htmlContent;
+    // 生成简单文本内容
+    let textContent = `HistAI每日提交报告 - ${dateStr}\n\n`;
+    textContent += `统计概要: 新增${stats.total}条, 待审核${stats.pending}条, 已通过${stats.approved}条, 已拒绝${stats.rejected}条\n\n`;
+    textContent += `提交详情:\n`;
+    textContent += `${'='.repeat(50)}\n\n`;
+    submissions.forEach((submission, index) => {
+        textContent += `${index + 1}. ID: ${submission.id}\n`;
+        textContent += `   时间: ${new Date(submission.submittedAt).toLocaleString('zh-CN')}\n`;
+        textContent += `   状态: ${getStatusText(submission.status)}\n`;
+        textContent += `   难度: Level ${submission.difficulty} | 类型: ${submission.answerType}\n`;
+        textContent += `   问题: ${submission.questionText}\n`;
+        textContent += `   答案: ${submission.answer}\n`;
+        if (submission.explanation)
+            textContent += `   解释: ${submission.explanation}\n`;
+        if (submission.sourceReference)
+            textContent += `   来源: ${submission.sourceReference}\n`;
+        if (submission.thematicDirection)
+            textContent += `   主题: ${submission.thematicDirection}\n`;
+        textContent += `   贡献者: ${submission.contributorName}`;
+        if (submission.contributorAffiliation)
+            textContent += ` (${submission.contributorAffiliation})`;
+        textContent += `\n`;
+        if (submission.attachments)
+            textContent += `   附件: ${submission.attachments.fileName} (${formatFileSize(submission.attachments.fileSize)})\n`;
+        textContent += `\n${'-'.repeat(30)}\n\n`;
+    });
+    textContent += `此邮件由 HistAI 系统自动发送于 ${new Date().toLocaleString('zh-CN')}`;
+    return textContent;
 }
 // 辅助函数：获取状态文本
 function getStatusText(status) {
@@ -374,34 +121,35 @@ async function sendDailyReport(submissions) {
             console.log('没有新增提交，跳过邮件发送');
             return;
         }
-        const apiInstance = initBrevoClient();
-        const htmlContent = generateEmailContent(submissions);
+        // 生成简单的文本邮件内容
+        const textContent = generateSimpleTextContent(submissions);
         // 从环境变量获取收件人列表
         const recipientsEnv = process.env.DAILY_REPORT_RECIPIENTS;
         const recipients = recipientsEnv ? recipientsEnv.split(',').map(email => email.trim()) : EMAIL_CONFIG.defaultRecipients;
         const today = new Date();
         const dateStr = today.toISOString().split('T')[0];
-        const emailCampaign = new SibApiV3Sdk.CreateEmailCampaign();
-        emailCampaign.name = `HistAI每日报告-${dateStr}`;
-        emailCampaign.subject = `${EMAIL_CONFIG.subject} - ${dateStr}（共${submissions.length}条新增）`;
-        emailCampaign.sender = {
-            name: process.env.DAILY_REPORT_SENDER_NAME || EMAIL_CONFIG.fromName,
-            email: process.env.DAILY_REPORT_SENDER_EMAIL || EMAIL_CONFIG.fromEmail
+        // 使用事务性邮件API发送邮件
+        const apiInstance = initBrevoTransactionalClient();
+        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+        // 配置事务性邮件
+        sendSmtpEmail.subject = `${EMAIL_CONFIG.subject} - ${dateStr}（共${submissions.length}条新增）`;
+        sendSmtpEmail.sender = {
+            "name": process.env.DAILY_REPORT_SENDER_NAME || EMAIL_CONFIG.fromName,
+            "email": process.env.DAILY_REPORT_SENDER_EMAIL || EMAIL_CONFIG.fromEmail
         };
-        emailCampaign.type = 'classic';
-        emailCampaign.htmlContent = htmlContent;
-        emailCampaign.recipients = {
-            listIds: [], // 可以配置收件人列表ID
-            // 或者直接指定收件人邮箱
-        };
-        // 立即发送
-        emailCampaign.scheduledAt = new Date().toISOString();
-        console.log('准备发送邮件:', {
-            subject: emailCampaign.subject,
+        // 使用简单格式的HTML内容（保持文本的换行格式）
+        sendSmtpEmail.htmlContent = `<pre style="font-family: monospace; white-space: pre-wrap; font-size: 14px;">${textContent}</pre>`;
+        // 设置收件人列表
+        sendSmtpEmail.to = recipients.map(email => ({ email: email }));
+        console.log('准备发送事务性邮件:', {
+            subject: sendSmtpEmail.subject,
             recipients: recipients,
-            submissionsCount: submissions.length
+            submissionsCount: submissions.length,
+            contentLength: textContent.length,
+            to: sendSmtpEmail.to
         });
-        const result = await apiInstance.createEmailCampaign(emailCampaign);
+        // 调用 Brevo 事务性邮件API
+        const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
         console.log('✅ 邮件发送成功:', result);
         // 记录发送历史
         await recordEmailSent(submissions.length, recipients, 'success');

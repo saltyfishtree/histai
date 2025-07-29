@@ -7,7 +7,7 @@ import { FormData, ApiResponse } from '../../types/types';
 // Firebase Functions URL - 在开发环境中始终使用本地模拟器
 // 只有在真正部署到生产环境时才使用生产URL
 const FUNCTIONS_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://127.0.0.1:5003/test/us-central1'
+  ? 'http://127.0.0.1:5003/histai/us-central1'
   : 'https://us-central1-histagent.cloudfunctions.net';
 
 // 调试信息

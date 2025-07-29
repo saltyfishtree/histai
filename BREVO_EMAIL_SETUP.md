@@ -12,25 +12,29 @@
 ## 📋 新增的Cloud Functions
 
 ### 1. 定时任务
+
 - **函数名**: `dailyReportScheduler`
 - **触发方式**: 每天8点自动执行
 - **功能**: 自动查询当天新增数据并发送邮件
 
 ### 2. 手动触发邮件
+
 - **函数名**: `sendDailyReportManually`
-- **URL**: `http://127.0.0.1:5003/test/us-central1/sendDailyReportManually`
+- **URL**: `http://127.0.0.1:5003/histai/us-central1/sendDailyReportManually`
 - **方法**: POST
 - **功能**: 手动触发发送今日邮件报告
 
 ### 3. 邮件发送历史
+
 - **函数名**: `getEmailHistory`
-- **URL**: `http://127.0.0.1:5003/test/us-central1/getEmailHistory`
+- **URL**: `http://127.0.0.1:5003/histai/us-central1/getEmailHistory`
 - **方法**: GET
 - **功能**: 查看邮件发送历史记录
 
 ### 4. 测试邮件发送
+
 - **函数名**: `testEmailSending`
-- **URL**: `http://127.0.0.1:5003/test/us-central1/testEmailSending`
+- **URL**: `http://127.0.0.1:5003/histai/us-central1/testEmailSending`
 - **方法**: POST
 - **功能**: 发送测试邮件验证功能
 
@@ -55,6 +59,7 @@ DAILY_REPORT_RECIPIENTS=admin@histai.com,manager@histai.com
 ### 设置环境变量的方法
 
 #### 方法1：使用Firebase CLI
+
 ```bash
 # 设置Brevo API密钥
 firebase functions:config:set brevo.api_key="your_brevo_api_key_here"
@@ -68,7 +73,9 @@ firebase functions:config:set email.recipients="admin@histai.com,manager@histai.
 ```
 
 #### 方法2：创建.env文件（开发环境）
-在`functions/`目录下创建`.env`文件：
+
+在 `functions/`目录下创建 `.env`文件：
+
 ```
 BREVO_API_KEY=your_brevo_api_key_here
 DAILY_REPORT_SENDER_NAME=HistAI Team
@@ -95,26 +102,31 @@ DAILY_REPORT_RECIPIENTS=admin@histai.com,manager@histai.com
 ## 🧪 测试步骤
 
 ### 1. 测试邮件发送功能
+
 ```bash
-curl -X POST http://127.0.0.1:5003/test/us-central1/testEmailSending \
+curl -X POST http://127.0.0.1:5003/histai/us-central1/testEmailSending \
   -H "Content-Type: application/json"
 ```
 
 ### 2. 手动触发今日报告
+
 ```bash
-curl -X POST http://127.0.0.1:5003/test/us-central1/sendDailyReportManually \
+curl -X POST http://127.0.0.1:5003/histai/us-central1/sendDailyReportManually \
   -H "Content-Type: application/json"
 ```
 
 ### 3. 查看邮件历史
+
 ```bash
-curl -X GET http://127.0.0.1:5003/test/us-central1/getEmailHistory
+curl -X GET http://127.0.0.1:5003/histai/us-central1/getEmailHistory
 ```
 
 ## 📊 数据存储
 
 ### 邮件发送历史
-所有邮件发送记录都会保存在Firestore的`emailHistory`集合中，包含：
+
+所有邮件发送记录都会保存在Firestore的 `emailHistory`集合中，包含：
+
 - 发送日期
 - 提交数量
 - 收件人列表
@@ -142,15 +154,16 @@ curl -X GET http://127.0.0.1:5003/test/us-central1/getEmailHistory
 ### 常见错误及解决方案
 
 1. **API密钥错误**
+
    - 检查环境变量是否正确配置
    - 确认API密钥是否有效
-
 2. **邮件发送失败**
+
    - 检查网络连接
    - 确认Brevo账户状态
    - 查看邮件历史记录中的错误信息
-
 3. **定时任务不执行**
+
    - 确保Functions已部署
    - 检查Cloud Scheduler是否启用
 
@@ -172,4 +185,4 @@ curl -X GET http://127.0.0.1:5003/test/us-central1/getEmailHistory
 - [ ] 验证定时任务设置
 - [ ] 检查邮件历史记录功能
 
-完成以上配置后，系统将自动在每天8点发送包含当天所有新增提交数据的邮件报告！ 
+完成以上配置后，系统将自动在每天8点发送包含当天所有新增提交数据的邮件报告！

@@ -512,8 +512,10 @@ function getStatusText(status: string): string {
 // ==================== 邮件发送功能 ====================
 
 // 每日定时发送邮件报告（每天8点执行）
+// 每日定时发送邮件报告（每分钟执行，用于测试）
 export const dailyReportScheduler = onSchedule({
-  schedule: '0 8 * * *',
+  // schedule: '0 8 * * *',
+  schedule: '* * * * *',
   timeZone: 'Asia/Shanghai'
 }, async (context: ScheduledEvent) => {
     try {
@@ -719,3 +721,5 @@ export const testEmailSending = functions.https.onRequest(async (req, res) => {
     });
   }
 });
+
+// 测试自动编译 - 添加时间戳: 2025-07-29 13:45
